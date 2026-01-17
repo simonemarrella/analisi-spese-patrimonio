@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisi Spese e Patrimonio</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'%3E%3C/line%3E%3Cline x1='12' y1='20' x2='12' y2='4'%3E%3C/line%3E%3Cline x1='6' y1='20' x2='6' y2='14'%3E%3C/line%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: #e2e8f0;
+        }
+        button, input, select, textarea {
+            font-family: inherit;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .header-left h1 {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .header-left h1 svg {
+            color: #6366f1;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .header-left .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-left .subtitle.loaded {
+            color: #10b981;
+        }
+        .info-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #64748b;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .info-btn:hover {
+            border-color: #6366f1;
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .info-tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .info-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #475569;
+        }
+        .info-btn:hover .info-tooltip,
+        .info-btn:focus .info-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        .upload-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: 2px solid #475569;
+            background: rgba(51, 65, 85, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+            color: #94a3b8;
+        }
+        .upload-btn svg {
+            stroke: currentColor;
+            width: 18px;
+            height: 18px;
+        }
+        .upload-btn:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+        .upload-btn.loaded {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .file-input {
+            display: none;
+        }
+        .patrimony-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            position: relative;
+        }
+        .patrimony-label {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .patrimony-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        .patrimony-toggles {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toggle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: rgba(51, 65, 85, 0.5);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .toggle-btn:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .toggle-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.3);
+        }
+        .accounts-panel, .historical-panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .accounts-panel.open, .historical-panel.open {
+            display: block;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .panel-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .close-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+        .accounts-chart-container {
+            height: 200px;
+        }
+        
+        /* Historical Panel Filters */
+        .historical-filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-group-btn {
+            justify-content: flex-end;
+        }
+        .filter-group label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .filter-row {
+            display: flex;
+            gap: 8px;
+        }
+        .historical-filters .filter-select {
+            padding: 8px 28px 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 100px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        .historical-filters .filter-select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        .historical-results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .results-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .result-card {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .result-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .result-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .result-value.start-value {
+            color: #60a5fa;
+        }
+        .result-value.positive {
+            color: #4ade80;
+        }
+        .result-value.negative {
+            color: #f87171;
+        }
+        .result-secondary {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .tabs {
+            display: flex;
+            gap: 6px;
+        }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: #334155;
+            color: #cbd5e1;
+        }
+        .tab:hover {
+            background: #475569;
+        }
+        .tab.active {
+            background: #6366f1;
+            color: white;
+        }
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+            align-items: center;
+        }
+        .filter-select {
+            padding: 6px 28px 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            height: 34px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        .clear-filters {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: rgba(51, 65, 85, 0.5);
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .clear-filters:hover {
+            border-color: #f87171;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .chart-container {
+            height: 350px;
+            position: relative;
+        }
+        .chart-container.flow-multi {
+            height: auto;
+            min-height: 200px;
+        }
+        .hidden {
+            display: none;
+        }
+        .flow-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .flow-card {
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .flow-card .label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .flow-card .value {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .flow-card .value.green { color: #4ade80; }
+        .flow-card .value.red { color: #f87171; }
+        
+        /* Transactions list */
+        .transactions-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .transactions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .transactions-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .transactions-count {
+            font-size: 12px;
+            color: #94a3b8;
+            background: rgba(51, 65, 85, 0.5);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .transactions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 16px;
+            margin-right: -8px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+        }
+        
+        /* Custom scrollbar */
+        .transactions-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .transactions-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+            margin: 4px 0;
+        }
+        .transactions-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        .transactions-list::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #818cf8 0%, #a78bfa 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+        .transaction-left {
+            flex: 1;
+            min-width: 0;
+        }
+        .transaction-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .transaction-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .transaction-category {
+            color: #94a3b8;
+        }
+        .transaction-account {
+            color: #6366f1;
+        }
+        .transaction-amount {
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 16px;
+            white-space: nowrap;
+        }
+        .transaction-amount.income {
+            color: #4ade80;
+        }
+        .transaction-amount.expense {
+            color: #f87171;
+        }
+        .no-transactions {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+        }
+        .no-chart-data {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filters {
+                margin-left: 0;
+                justify-content: flex-end;
+            }
+            .patrimony-value {
+                font-size: 2rem;
+            }
+            .patrimony-toggles {
+                position: static;
+                transform: none;
+                flex-direction: row;
+                justify-content: center;
+                margin-top: 12px;
+            }
+            .patrimony-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .historical-filters {
+                flex-direction: column;
+            }
+            .historical-results {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Analisi Spese e Patrimonio</h1>
+                <p class="subtitle" id="subtitle">Carica il file <em>.csv</em> estratto da Cashew</p>
+            </div>
+            <div class="upload-btn" id="uploadBtn">
+                <svg id="uploadIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <input type="file" class="file-input" id="fileInput" accept=".csv">
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="patrimony-card">
+                <div class="patrimony-label">Patrimonio Totale</div>
+                <div class="patrimony-value" id="totalPatrimony">€ 0</div>
+                <div class="patrimony-toggles">
+                    <button class="toggle-btn" id="accountsToggle" title="Mostra conti">
+                        🏦
+                    </button>
+                    <button class="toggle-btn" id="historicalToggle" title="Storico Patrimonio">
+                        📈
+                    </button>
+                </div>
+            </div>
+
+            <!-- Accounts Panel -->
+            <div class="accounts-panel" id="accountsPanel">
+                <div class="panel-header">
+                    <h2>Saldo per Conto</h2>
+                    <button class="close-btn" id="closeAccounts">✕</button>
+                </div>
+                <div class="accounts-chart-container">
+                    <canvas id="accountsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Historical Patrimony Panel -->
+            <div class="historical-panel" id="historicalPanel">
+                <div class="panel-header">
+                    <h2>📈 Storico Patrimonio</h2>
+                    <button class="close-btn" id="closeHistorical">✕</button>
+                </div>
+                <div class="historical-filters">
+                    <div class="filter-group">
+                        <label>📅 Data Inizio</label>
+                        <div class="filter-row">
+                            <select class="filter-select" id="startMonth">
+                                <option value="">Mese</option>
+                            </select>
+                            <select class="filter-select" id="startYear">
+                                <option value="">Anno</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>📅 Data Fine</label>
+                        <div class="filter-row">
+                            <select class="filter-select" id="endMonth">
+                                <option value="">Mese</option>
+                            </select>
+                            <select class="filter-select" id="endYear">
+                                <option value="">Anno</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-group filter-group-btn">
+                        <button class="clear-filters" id="clearHistoricalFilters" title="Pulisci filtri">✕</button>
+                    </div>
+                </div>
+                <div class="historical-results" id="historicalResults"></div>
+            </div>
+
+            <div class="controls">
+                <div class="tabs">
+                    <button class="tab active" data-view="categorie">Categorie</button>
+                    <button class="tab" data-view="sottocategorie">Sottocategorie</button>
+                    <button class="tab" data-view="flussi">Flussi</button>
+                </div>
+                <div class="filters">
+                    <select class="filter-select" id="monthSelect">
+                        <option value="all">Tutti i mesi</option>
+                    </select>
+                    <select class="filter-select" id="yearSelect">
+                        <option value="all">Tutti gli anni</option>
+                    </select>
+                    <select class="filter-select" id="categorySelect">
+                        <option value="all">Tutte le categorie</option>
+                    </select>
+                    <button class="clear-filters" id="clearFilters" title="Pulisci filtri">✕</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
+                <div id="flowSummary" class="flow-summary hidden">
+                    <div class="flow-card">
+                        <div class="label">Totale Entrate</div>
+                        <div class="value green" id="flowIn">€ 0</div>
+                    </div>
+                    <div class="flow-card">
+                        <div class="label">Totale Uscite</div>
+                        <div class="value red" id="flowOut">€ 0</div>
+                    </div>
+                </div>
+                <div class="chart-container" id="chartContainer">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+
+            <div class="transactions-card">
+                <div class="transactions-header">
+                    <h2>Transazioni</h2>
+                    <span class="transactions-count" id="transactionsCount">0 transazioni</span>
+                </div>
+                <div class="transactions-list" id="transactionsList">
+                    <div class="no-transactions">Nessuna transazione</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#ef4444', '#a855f7', '#f97316', '#14b8a6'];
+        
+        let chartInstance = null;
+        let accountsChartInstance = null;
+        let allTransactions = [];
+        let allRows = [];
+        let accountBalances = {};
+        let currentView = 'categorie';
+        let currentYear = 'all';
+        let currentMonth = 'all';
+        let currentCategory = 'all';
+
+        const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+        // Elementi DOM
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadIcon = document.getElementById('uploadIcon');
+        const fileInput = document.getElementById('fileInput');
+        const results = document.getElementById('results');
+        const subtitle = document.getElementById('subtitle');
+        const yearSelect = document.getElementById('yearSelect');
+        const monthSelect = document.getElementById('monthSelect');
+        const categorySelect = document.getElementById('categorySelect');
+        const accountsToggle = document.getElementById('accountsToggle');
+        const accountsPanel = document.getElementById('accountsPanel');
+        const closeAccounts = document.getElementById('closeAccounts');
+        const clearFilters = document.getElementById('clearFilters');
+        
+        // Historical panel elements
+        const historicalToggle = document.getElementById('historicalToggle');
+        const historicalPanel = document.getElementById('historicalPanel');
+        const closeHistorical = document.getElementById('closeHistorical');
+        const startMonth = document.getElementById('startMonth');
+        const startYear = document.getElementById('startYear');
+        const endMonth = document.getElementById('endMonth');
+        const endYear = document.getElementById('endYear');
+        const clearHistoricalFilters = document.getElementById('clearHistoricalFilters');
+
+        // Font globale Montserrat
+        Chart.defaults.font.family = "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+        // Eventi upload
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        uploadBtn.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBtn.style.borderColor = '#6366f1';
+        });
+        uploadBtn.addEventListener('dragleave', () => {
+            uploadBtn.style.borderColor = '';
+        });
+        uploadBtn.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBtn.style.borderColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                processFile(file);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentView = tab.dataset.view;
+                updateDisplay();
+            });
+        });
+
+        // Year select
+        yearSelect.addEventListener('change', (e) => {
+            currentYear = e.target.value;
+            updateDisplay();
+        });
+
+        // Month select
+        monthSelect.addEventListener('change', (e) => {
+            currentMonth = e.target.value;
+            updateDisplay();
+        });
+
+        // Category select
+        categorySelect.addEventListener('change', (e) => {
+            currentCategory = e.target.value;
+            updateDisplay();
+        });
+
+        // Clear filters
+        clearFilters.addEventListener('click', () => {
+            currentYear = 'all';
+            currentMonth = 'all';
+            currentCategory = 'all';
+            yearSelect.value = 'all';
+            monthSelect.value = 'all';
+            categorySelect.value = 'all';
+            updateDisplay();
+        });
+
+        // Accounts panel toggle
+        accountsToggle.addEventListener('click', () => {
+            const isOpen = accountsPanel.classList.toggle('open');
+            accountsToggle.classList.toggle('active', isOpen);
+            if (isOpen) {
+                renderAccountsChart();
+            }
+        });
+
+        closeAccounts.addEventListener('click', () => {
+            accountsPanel.classList.remove('open');
+            accountsToggle.classList.remove('active');
+        });
+
+        // Historical panel toggle
+        historicalToggle.addEventListener('click', () => {
+            const isOpen = historicalPanel.classList.toggle('open');
+            historicalToggle.classList.toggle('active', isOpen);
+            if (isOpen) {
+                updateHistoricalPatrimony();
+            }
+        });
+
+        closeHistorical.addEventListener('click', () => {
+            historicalPanel.classList.remove('open');
+            historicalToggle.classList.remove('active');
+        });
+
+        // Historical filters listeners
+        startMonth.addEventListener('change', updateHistoricalPatrimony);
+        startYear.addEventListener('change', updateHistoricalPatrimony);
+        endMonth.addEventListener('change', updateHistoricalPatrimony);
+        endYear.addEventListener('change', updateHistoricalPatrimony);
+
+        // Clear historical filters
+        clearHistoricalFilters.addEventListener('click', () => {
+            startMonth.value = '';
+            startYear.value = '';
+            endMonth.value = '';
+            endYear.value = '';
+            updateHistoricalPatrimony();
+        });
+
+        function processFile(file) {
+            uploadBtn.classList.add('loaded');
+            uploadIcon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            
+            // Aggiorna il sottotitolo con il nome del file
+            subtitle.classList.add('loaded');
+            subtitle.innerHTML = `File <em>.csv</em> estratto da Cashew caricato <button class="info-btn" title="Info file">i<span class="info-tooltip">${file.name}</span></button>`;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    analyzeData(results.data);
+                }
+            });
+        }
+
+        function analyzeData(rows) {
+            allRows = rows;
+            
+            // Calcola saldo per ogni conto (somma di tutte le transazioni per conto)
+            accountBalances = {};
+            rows.forEach(row => {
+                const account = row.account;
+                const amount = parseFloat(row.amount) || 0;
+                if (account) {
+                    accountBalances[account] = (accountBalances[account] || 0) + amount;
+                }
+            });
+            
+            // Patrimonio totale = somma di TUTTI gli importi del CSV
+            const totalPatrimony = Object.values(accountBalances).reduce((sum, val) => sum + val, 0);
+            
+            document.getElementById('totalPatrimony').textContent = '€ ' + totalPatrimony.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // Filtra le correzioni saldo per l'analisi categorie/flussi
+            allTransactions = rows
+                .filter(row => row['category name'] && row['category name'] !== 'Correzione saldo')
+                .map(row => {
+                    const date = new Date(row.date);
+                    return {
+                        ...row,
+                        amount: parseFloat(row.amount) || 0,
+                        month: date.getMonth() + 1,
+                        year: date.getFullYear(),
+                        date: date
+                    };
+                });
+
+            // Popola i selettori principali
+            const years = [...new Set(allTransactions.map(t => t.year))].sort().reverse();
+            yearSelect.innerHTML = '<option value="all">Tutti gli anni</option>';
+            years.forEach(y => {
+                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            });
+
+            monthSelect.innerHTML = '<option value="all">Tutti i mesi</option>';
+            for (let i = 0; i < 12; i++) {
+                monthSelect.innerHTML += `<option value="${i + 1}">${MONTH_NAMES[i]}</option>`;
+            }
+
+            // Popola il selettore delle categorie
+            const categories = [...new Set(allTransactions.map(t => t['category name']).filter(c => c))].sort();
+            categorySelect.innerHTML = '<option value="all">Tutte le categorie</option>';
+            categories.forEach(cat => {
+                categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            // Popola i selettori dello storico patrimonio
+            populateHistoricalFilters(years);
+
+            // Calcola e mostra subito entrate/uscite totali
+            updateFlowSummary(allTransactions);
+
+            results.classList.remove('hidden');
+            updateDisplay();
+            
+            // Aggiorna lo storico se il pannello è aperto
+            if (historicalPanel.classList.contains('open')) {
+                updateHistoricalPatrimony();
+            }
+        }
+
+        function populateHistoricalFilters(years) {
+            // Popola mesi
+            const monthOptions = '<option value="">Mese (attuale)</option>' + 
+                MONTH_NAMES.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+            startMonth.innerHTML = monthOptions;
+            endMonth.innerHTML = monthOptions;
+            
+            // Popola anni
+            const yearOptions = '<option value="">Anno (attuale)</option>' + 
+                years.map(y => `<option value="${y}">${y}</option>`).join('');
+            startYear.innerHTML = yearOptions;
+            endYear.innerHTML = yearOptions;
+        }
+
+        function renderAccountsChart() {
+            if (accountsChartInstance) {
+                accountsChartInstance.destroy();
+            }
+
+            const data = Object.entries(accountBalances)
+                .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+                .sort((a, b) => b.value - a.value);
+
+            const ctx = document.getElementById('accountsChart').getContext('2d');
+            accountsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map((_, i) => COLORS[i % COLORS.length]),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => '€ ' + ctx.raw.toLocaleString('it-IT')
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: (v) => '€' + v.toLocaleString('it-IT')
+                            },
+                            grid: { color: '#334155' }
+                        },
+                        y: {
+                            ticks: { color: '#e2e8f0' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculatePatrimonyAtDate(targetDate) {
+            // Calcola il patrimonio come somma degli amount fino alla data specificata
+            if (!allRows || allRows.length === 0) return 0;
+            
+            const transactionsWithDates = allRows
+                .map(row => ({
+                    date: new Date(row.date),
+                    amount: parseFloat(row.amount) || 0
+                }))
+                .filter(t => !isNaN(t.date.getTime()));
+            
+            // Somma tutti gli amount fino alla data target (inclusa)
+            const patrimony = transactionsWithDates
+                .filter(t => t.date <= targetDate)
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            return patrimony;
+        }
+
+        function getCurrentPatrimony() {
+            // Patrimonio attuale = somma di tutti gli amount
+            if (!allRows || allRows.length === 0) return 0;
+            return allRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
+        }
+
+        function updateHistoricalPatrimony() {
+            const resultsEl = document.getElementById('historicalResults');
+            
+            if (!allRows || allRows.length === 0) {
+                resultsEl.innerHTML = '<div class="result-card" style="grid-column: 1/-1;"><div class="result-label">Carica un file CSV per visualizzare i dati</div></div>';
+                return;
+            }
+            
+            const now = new Date();
+            
+            // Determina data inizio - calcola patrimonio all'INIZIO del periodo (prima delle transazioni)
+            let startDateLabel = 'Attuale';
+            let startPatrimony;
+            
+            const sMonth = startMonth.value;
+            const sYear = startYear.value;
+            
+            if (sMonth && sYear) {
+                // Mese e anno specificati - INIZIO del mese (ultimo istante prima del 1° del mese)
+                const targetDate = new Date(parseInt(sYear), parseInt(sMonth) - 1, 1, 0, 0, 0);
+                targetDate.setMilliseconds(-1); // Un istante prima dell'inizio del mese
+                startPatrimony = calculatePatrimonyAtDate(targetDate);
+                startDateLabel = `Inizio ${MONTH_NAMES[parseInt(sMonth) - 1]} ${sYear}`;
+            } else if (sYear) {
+                // Solo anno - INIZIO dell'anno (31 dic anno precedente)
+                const targetDate = new Date(parseInt(sYear) - 1, 11, 31, 23, 59, 59);
+                startPatrimony = calculatePatrimonyAtDate(targetDate);
+                startDateLabel = `Inizio ${sYear}`;
+            } else if (sMonth) {
+                // Solo mese - inizio mese dell'anno corrente
+                const currentYear = now.getFullYear();
+                const targetDate = new Date(currentYear, parseInt(sMonth) - 1, 1, 0, 0, 0);
+                targetDate.setMilliseconds(-1);
+                startPatrimony = calculatePatrimonyAtDate(targetDate);
+                startDateLabel = `Inizio ${MONTH_NAMES[parseInt(sMonth) - 1]} ${currentYear}`;
+            } else {
+                // Nessun filtro - patrimonio attuale
+                startPatrimony = getCurrentPatrimony();
+            }
+            
+            // Determina data fine - calcola patrimonio alla FINE del periodo (dopo tutte le transazioni)
+            let endDateLabel = 'Attuale';
+            let endPatrimony;
+            
+            const eMonth = endMonth.value;
+            const eYear = endYear.value;
+            
+            if (eMonth && eYear) {
+                // Mese e anno specificati - FINE del mese selezionato
+                const targetDate = new Date(parseInt(eYear), parseInt(eMonth), 0, 23, 59, 59);
+                endPatrimony = calculatePatrimonyAtDate(targetDate);
+                endDateLabel = `Fine ${MONTH_NAMES[parseInt(eMonth) - 1]} ${eYear}`;
+            } else if (eYear) {
+                // Solo anno - fine dell'anno
+                const targetDate = new Date(parseInt(eYear), 11, 31, 23, 59, 59);
+                endPatrimony = calculatePatrimonyAtDate(targetDate);
+                endDateLabel = `Fine ${eYear}`;
+            } else if (eMonth) {
+                // Solo mese - fine mese dell'anno corrente
+                const currentYear = now.getFullYear();
+                const targetDate = new Date(currentYear, parseInt(eMonth), 0, 23, 59, 59);
+                endPatrimony = calculatePatrimonyAtDate(targetDate);
+                endDateLabel = `Fine ${MONTH_NAMES[parseInt(eMonth) - 1]} ${currentYear}`;
+            } else {
+                // Nessun filtro - patrimonio attuale
+                endPatrimony = getCurrentPatrimony();
+            }
+            
+            // Calcola variazione
+            const variation = endPatrimony - startPatrimony;
+            
+            // Calcola percentuale
+            let variationPercentage;
+            let percentageDisplay;
+            if (startPatrimony === 0) {
+                variationPercentage = null;
+                percentageDisplay = 'N/A';
+            } else {
+                variationPercentage = (variation / Math.abs(startPatrimony)) * 100;
+                const percentSign = variationPercentage >= 0 ? '+' : '-';
+                percentageDisplay = `${percentSign} ${Math.abs(variationPercentage).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`;
+            }
+            
+            // Formatta variazione con segno: segno spazio € spazio cifra
+            const variationSign = variation >= 0 ? '+' : '-';
+            const variationDisplay = `${variationSign} € ${Math.abs(variation).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            // Mostra i risultati
+            // Determina colore patrimonio fine: verde se > inizio, rosso se < inizio, blu se =
+            let endValueClass = 'start-value'; // blu di default (uguale)
+            if (endPatrimony > startPatrimony) {
+                endValueClass = 'positive'; // verde
+            } else if (endPatrimony < startPatrimony) {
+                endValueClass = 'negative'; // rosso
+            }
+            
+            resultsEl.innerHTML = `
+                <div class="results-group">
+                    <div class="result-card">
+                        <div class="result-label">Patrimonio Inizio Periodo</div>
+                        <div class="result-value start-value">€ ${startPatrimony.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div class="result-secondary">${startDateLabel}</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Patrimonio Fine Periodo</div>
+                        <div class="result-value ${endValueClass}">€ ${endPatrimony.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div class="result-secondary">${endDateLabel}</div>
+                    </div>
+                </div>
+                <div class="results-group">
+                    <div class="result-card">
+                        <div class="result-label">Variazione Totale</div>
+                        <div class="result-value ${variation >= 0 ? 'positive' : 'negative'}">${variationDisplay}</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Variazione %</div>
+                        <div class="result-value ${variationPercentage === null ? '' : (variationPercentage >= 0 ? 'positive' : 'negative')}">${percentageDisplay}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateFlowSummary(transactions) {
+            const totalIncome = transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+            const totalExpenses = transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            document.getElementById('flowIn').textContent = '€ ' + totalIncome.toLocaleString('it-IT', {minimumFractionDigits: 2});
+            document.getElementById('flowOut').textContent = '€ ' + totalExpenses.toLocaleString('it-IT', {minimumFractionDigits: 2});
+        }
+
+        function getFilteredTransactions() {
+            return allTransactions.filter(t => {
+                const yearMatch = currentYear === 'all' || t.year === parseInt(currentYear);
+                const monthMatch = currentMonth === 'all' || t.month === parseInt(currentMonth);
+                const categoryMatch = currentCategory === 'all' || t['category name'] === currentCategory;
+                return yearMatch && monthMatch && categoryMatch;
+            });
+        }
+
+        function updateDisplay() {
+            const transactions = getFilteredTransactions();
+            
+            const flowSummary = document.getElementById('flowSummary');
+            const chartContainer = document.getElementById('chartContainer');
+            
+            // Aggiorna sempre il summary con i dati filtrati
+            updateFlowSummary(transactions);
+            
+            // Aggiorna lista transazioni
+            updateTransactionsList(transactions);
+            
+            if (currentView === 'flussi') {
+                flowSummary.classList.remove('hidden');
+                updateFlowChart(transactions);
+            } else {
+                flowSummary.classList.add('hidden');
+                chartContainer.classList.remove('flow-multi');
+                chartContainer.style.height = '350px';
+                updateCategoryChart(transactions);
+            }
+        }
+
+        function updateTransactionsList(transactions) {
+            const listEl = document.getElementById('transactionsList');
+            const countEl = document.getElementById('transactionsCount');
+            
+            // Ordina per data decrescente
+            const sorted = [...transactions].sort((a, b) => b.date - a.date);
+            
+            countEl.textContent = `${sorted.length} transazion${sorted.length === 1 ? 'e' : 'i'}`;
+            
+            if (sorted.length === 0) {
+                listEl.innerHTML = '<div class="no-transactions">Nessuna transazione nel periodo selezionato</div>';
+                return;
+            }
+            
+            listEl.innerHTML = sorted.map(t => {
+                const isIncome = t.amount > 0;
+                const amountClass = isIncome ? 'income' : 'expense';
+                const amountSign = isIncome ? '+ ' : '- ';
+                const dateStr = t.date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+                const category = t['category name'] || '';
+                const subcategory = t['subcategory name'] ? ` → ${t['subcategory name']}` : '';
+                
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-left">
+                            <div class="transaction-title">${t.title || 'Senza titolo'}</div>
+                            <div class="transaction-meta">
+                                <span>${dateStr}</span>
+                                <span class="transaction-category">${category}${subcategory}</span>
+                                <span class="transaction-account">${t.account || ''}</span>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${amountClass}">
+                            ${amountSign}€ ${Math.abs(t.amount).toLocaleString('it-IT', {minimumFractionDigits: 2})}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCategoryChart(transactions) {
+            const isSubcategory = currentView === 'sottocategorie';
+            const title = isSubcategory ? 'Spese per Sottocategoria' : 'Spese per Categoria';
+            document.getElementById('chartTitle').textContent = title;
+
+            // Calcola totali
+            const totals = {};
+            transactions.forEach(t => {
+                if (t.amount < 0) {
+                    const cat = t['category name'] || 'Altro';
+                    const sub = t['subcategory name'] || 'Generale';
+                    const key = isSubcategory ? `${cat} → ${sub}` : cat;
+                    totals[key] = (totals[key] || 0) + Math.abs(t.amount);
+                }
+            });
+
+            const data = Object.entries(totals)
+                .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+                .sort((a, b) => b.value - a.value);
+
+            const chartData = data.slice(0, 15);
+            
+            if (chartData.length === 0) {
+                renderEmptyChart('Nessuna spesa nel periodo selezionato');
+                return;
+            }
+            
+            renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]));
+        }
+
+        function updateFlowChart(transactions) {
+            document.getElementById('chartTitle').textContent = 'Flussi Entrate/Uscite';
+
+            // Controlla se ci sono transazioni
+            if (transactions.length === 0) {
+                document.getElementById('chartContainer').classList.remove('flow-multi');
+                document.getElementById('chartContainer').style.height = '150px';
+                renderEmptyChart('Nessun flusso presente');
+                return;
+            }
+
+            // Se è selezionato un mese specifico, mostra solo quel mese
+            const showMultipleMonths = currentMonth === 'all';
+            
+            if (!showMultipleMonths) {
+                // Singolo mese: due barre
+                const income = transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+                const expenses = transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                
+                const data = [
+                    { name: 'Entrate', value: Math.round(income * 100) / 100 },
+                    { name: 'Uscite', value: Math.round(expenses * 100) / 100 }
+                ];
+                
+                document.getElementById('chartContainer').classList.remove('flow-multi');
+                document.getElementById('chartContainer').style.height = '150px';
+                renderBarChart(data, ['#4ade80', '#f87171']);
+            } else {
+                // Multipli mesi: raggruppa per mese
+                const monthlyData = {};
+                
+                transactions.forEach(t => {
+                    const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+                    if (!monthlyData[key]) {
+                        monthlyData[key] = { income: 0, expenses: 0, year: t.year, month: t.month };
+                    }
+                    if (t.amount > 0) {
+                        monthlyData[key].income += t.amount;
+                    } else {
+                        monthlyData[key].expenses += Math.abs(t.amount);
+                    }
+                });
+
+                const sortedMonths = Object.keys(monthlyData).sort().reverse();
+                
+                if (sortedMonths.length === 0) {
+                    renderEmptyChart('Nessun dato nel periodo selezionato');
+                    return;
+                }
+
+                const labels = sortedMonths.map(k => {
+                    const d = monthlyData[k];
+                    return `${MONTH_NAMES[d.month - 1]} ${d.year}`;
+                });
+                
+                const incomeData = sortedMonths.map(k => Math.round(monthlyData[k].income * 100) / 100);
+                const expensesData = sortedMonths.map(k => Math.round(monthlyData[k].expenses * 100) / 100);
+
+                // Calcola altezza dinamica
+                const chartHeight = Math.max(200, sortedMonths.length * 60);
+                document.getElementById('chartContainer').classList.add('flow-multi');
+                document.getElementById('chartContainer').style.height = chartHeight + 'px';
+                
+                renderGroupedBarChart(labels, incomeData, expensesData);
+            }
+        }
+
+        function renderEmptyChart(message) {
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            const canvas = document.getElementById('chart');
+            const container = document.getElementById('chartContainer');
+            
+            // Nascondi il canvas e mostra un messaggio
+            canvas.style.display = 'none';
+            
+            // Rimuovi eventuale messaggio precedente
+            const existingMsg = container.querySelector('.no-chart-data');
+            if (existingMsg) existingMsg.remove();
+            
+            // Crea il messaggio con lo stesso stile di no-transactions
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'no-chart-data';
+            msgDiv.textContent = message;
+            container.appendChild(msgDiv);
+        }
+        
+        function clearEmptyChartMessage() {
+            const canvas = document.getElementById('chart');
+            const container = document.getElementById('chartContainer');
+            canvas.style.display = 'block';
+            const existingMsg = container.querySelector('.no-chart-data');
+            if (existingMsg) existingMsg.remove();
+        }
+
+        function renderBarChart(data, colors) {
+            clearEmptyChartMessage();
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: colors,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => '€ ' + ctx.raw.toLocaleString('it-IT')
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: (v) => '€' + v.toLocaleString('it-IT')
+                            },
+                            grid: { color: '#334155' }
+                        },
+                        y: {
+                            ticks: { color: '#e2e8f0' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGroupedBarChart(labels, incomeData, expensesData) {
+            clearEmptyChartMessage();
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Entrate',
+                            data: incomeData,
+                            backgroundColor: '#4ade80',
+                            borderRadius: 4,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'Uscite',
+                            data: expensesData,
+                            backgroundColor: '#f87171',
+                            borderRadius: 4,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ctx.dataset.label + ': € ' + ctx.raw.toLocaleString('it-IT')
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: (v) => '€' + v.toLocaleString('it-IT')
+                            },
+                            grid: { color: '#334155' }
+                        },
+                        y: {
+                            ticks: { color: '#e2e8f0' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
