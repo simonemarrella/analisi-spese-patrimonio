@@ -91,6 +91,11 @@
             color: #6366f1;
             background: rgba(99, 102, 241, 0.1);
         }
+        .info-btn.active {
+            border-color: #6366f1;
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
         .info-tooltip {
             position: absolute;
             bottom: calc(100% + 8px);
@@ -108,6 +113,7 @@
             transition: all 0.2s;
             z-index: 100;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
         }
         .info-tooltip::after {
             content: '';
@@ -118,8 +124,7 @@
             border: 6px solid transparent;
             border-top-color: #475569;
         }
-        .info-btn:hover .info-tooltip,
-        .info-btn:focus .info-tooltip {
+        .info-btn.active .info-tooltip {
             opacity: 1;
             visibility: visible;
         }
@@ -127,29 +132,29 @@
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            border: 2px solid #475569;
-            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid #475569;
+            background: rgba(51, 65, 85, 0.5);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            transition: all 0.3s;
+            transition: all 0.2s;
             color: #94a3b8;
         }
         .upload-btn svg {
             stroke: currentColor;
+            fill: none;
             width: 18px;
             height: 18px;
         }
         .upload-btn:hover {
             border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.1);
-            color: #6366f1;
+            background: rgba(99, 102, 241, 0.2);
+            color: #e2e8f0;
         }
         .upload-btn.loaded {
             border-color: #10b981;
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.2);
             color: #10b981;
         }
         .file-input {
@@ -195,14 +200,23 @@
             justify-content: center;
             font-size: 16px;
             transition: all 0.2s;
+            color: #94a3b8;
+        }
+        .toggle-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
         }
         .toggle-btn:hover {
             border-color: #6366f1;
             background: rgba(99, 102, 241, 0.2);
+            color: #e2e8f0;
         }
         .toggle-btn.active {
             border-color: #6366f1;
             background: rgba(99, 102, 241, 0.3);
+            color: #e2e8f0;
         }
         .accounts-panel, .historical-panel {
             background: #1e293b;
@@ -412,10 +426,48 @@
             padding: 20px;
             margin-bottom: 24px;
         }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
         .card-title {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin: 0;
+        }
+        .chart-type-toggle {
+            display: flex;
+            gap: 4px;
+            background: rgba(51, 65, 85, 0.5);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .chart-type-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .chart-type-btn:hover {
+            color: #e2e8f0;
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .chart-type-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+        .chart-type-btn svg {
+            width: 18px;
+            height: 18px;
         }
         .chart-container {
             height: 350px;
@@ -424,6 +476,14 @@
         .chart-container.flow-multi {
             height: auto;
             min-height: 200px;
+        }
+        .chart-container.pie-chart {
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+            margin-top: 10px;
         }
         .hidden {
             display: none;
@@ -703,6 +763,10 @@
             .card-title {
                 font-size: 0.9rem;
             }
+            .card-header {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
             .flow-summary {
                 gap: 10px;
             }
@@ -734,6 +798,10 @@
             .transaction-amount {
                 font-size: 13px;
             }
+            .chart-container.pie-chart {
+                height: 350px;
+                padding: 16px 0;
+            }
         }
         
         @media (max-width: 400px) {
@@ -760,6 +828,9 @@
                 padding: 8px 10px;
                 font-size: 11px;
             }
+            .chart-container.pie-chart {
+                height: 300px;
+            }
         }
     </style>
 </head>
@@ -771,7 +842,11 @@
                 <p class="subtitle" id="subtitle">Carica il file <em>.csv</em> estratto da Cashew</p>
             </div>
             <div class="upload-btn" id="uploadBtn">
-                <svg id="uploadIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <svg id="uploadIcon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
                 <input type="file" class="file-input" id="fileInput" accept=".csv">
             </div>
         </div>
@@ -782,10 +857,16 @@
                 <div class="patrimony-value" id="totalPatrimony">€ 0</div>
                 <div class="patrimony-toggles">
                     <button class="toggle-btn" id="accountsToggle" title="Mostra conti">
-                        🏦
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
                     </button>
                     <button class="toggle-btn" id="historicalToggle" title="Storico Patrimonio">
-                        📈
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -804,12 +885,12 @@
             <!-- Historical Patrimony Panel -->
             <div class="historical-panel" id="historicalPanel">
                 <div class="panel-header">
-                    <h2>📈 Storico Patrimonio</h2>
+                    <h2>Storico Patrimonio</h2>
                     <button class="close-btn" id="closeHistorical">✕</button>
                 </div>
                 <div class="historical-filters">
                     <div class="filter-group">
-                        <label>📅 Data Inizio</label>
+                        <label>Data Inizio</label>
                         <div class="filter-row">
                             <select class="filter-select" id="startMonth">
                                 <option value="">Mese</option>
@@ -820,7 +901,7 @@
                         </div>
                     </div>
                     <div class="filter-group">
-                        <label>📅 Data Fine</label>
+                        <label>Data Fine</label>
                         <div class="filter-row">
                             <select class="filter-select" id="endMonth">
                                 <option value="">Mese</option>
@@ -858,7 +939,24 @@
             </div>
 
             <div class="card">
-                <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
+                <div class="card-header">
+                    <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
+                    <div class="chart-type-toggle" id="chartTypeToggle">
+                        <button class="chart-type-btn active" data-type="bar" title="Grafico a barre">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </button>
+                        <button class="chart-type-btn" data-type="pie" title="Grafico a torta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 <div id="flowSummary" class="flow-summary hidden">
                     <div class="flow-card">
                         <div class="label">Totale Entrate</div>
@@ -887,7 +985,7 @@
     </div>
 
     <script>
-        const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#ef4444', '#a855f7', '#f97316', '#14b8a6'];
+        const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#ef4444', '#a855f7', '#f97316', '#14b8a6', '#84cc16', '#f43f5e', '#0ea5e9', '#d946ef', '#eab308'];
         
         let chartInstance = null;
         let accountsChartInstance = null;
@@ -898,6 +996,7 @@
         let currentYear = 'all';
         let currentMonth = 'all';
         let currentCategory = 'all';
+        let currentChartType = 'bar';
 
         const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
                             'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -915,6 +1014,7 @@
         const accountsPanel = document.getElementById('accountsPanel');
         const closeAccounts = document.getElementById('closeAccounts');
         const clearFilters = document.getElementById('clearFilters');
+        const chartTypeToggle = document.getElementById('chartTypeToggle');
         
         // Historical panel elements
         const historicalToggle = document.getElementById('historicalToggle');
@@ -957,6 +1057,17 @@
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 currentView = tab.dataset.view;
+                updateChartTypeVisibility();
+                updateDisplay();
+            });
+        });
+
+        // Chart type toggle
+        chartTypeToggle.querySelectorAll('.chart-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                chartTypeToggle.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentChartType = btn.dataset.type;
                 updateDisplay();
             });
         });
@@ -1033,6 +1144,29 @@
             updateHistoricalPatrimony();
         });
 
+        // Info button toggle - delegato al documento per elementi dinamici
+        document.addEventListener('click', (e) => {
+            const infoBtn = e.target.closest('.info-btn');
+            if (infoBtn) {
+                e.stopPropagation();
+                infoBtn.classList.toggle('active');
+            } else {
+                // Chiudi tutti i tooltip info se si clicca fuori
+                document.querySelectorAll('.info-btn.active').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+        });
+
+        function updateChartTypeVisibility() {
+            // Mostra/nascondi il toggle del tipo grafico
+            if (currentView === 'flussi') {
+                chartTypeToggle.style.display = 'none';
+            } else {
+                chartTypeToggle.style.display = 'flex';
+            }
+        }
+
         function processFile(file) {
             uploadBtn.classList.add('loaded');
             uploadIcon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
@@ -1108,6 +1242,7 @@
             updateFlowSummary(allTransactions);
 
             results.classList.remove('hidden');
+            updateChartTypeVisibility();
             updateDisplay();
             
             // Aggiorna lo storico se il pannello è aperto
@@ -1362,7 +1497,14 @@
             } else {
                 flowSummary.classList.add('hidden');
                 chartContainer.classList.remove('flow-multi');
-                chartContainer.style.height = '350px';
+                chartContainer.style.height = currentChartType === 'pie' ? '' : '350px';
+                
+                if (currentChartType === 'pie') {
+                    chartContainer.classList.add('pie-chart');
+                } else {
+                    chartContainer.classList.remove('pie-chart');
+                }
+                
                 updateCategoryChart(transactions);
             }
         }
@@ -1412,7 +1554,7 @@
             const title = isSubcategory ? 'Spese per Sottocategoria' : 'Spese per Categoria';
             document.getElementById('chartTitle').textContent = title;
 
-            // Calcola totali
+            // Calcola totali (solo spese, amount < 0)
             const totals = {};
             transactions.forEach(t => {
                 if (t.amount < 0) {
@@ -1423,8 +1565,15 @@
                 }
             });
 
+            // Calcola il totale generale delle spese
+            const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
+
             const data = Object.entries(totals)
-                .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+                .map(([name, value]) => ({ 
+                    name, 
+                    value: Math.round(value * 100) / 100,
+                    percentage: grandTotal > 0 ? (value / grandTotal * 100) : 0
+                }))
                 .sort((a, b) => b.value - a.value);
 
             const chartData = data.slice(0, 15);
@@ -1434,7 +1583,11 @@
                 return;
             }
             
-            renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]));
+            if (currentChartType === 'pie') {
+                renderPieChart(chartData);
+            } else {
+                renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]));
+            }
         }
 
         function updateFlowChart(transactions) {
@@ -1560,7 +1713,14 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => '€ ' + ctx.raw.toLocaleString('it-IT')
+                                label: (ctx) => {
+                                    const item = data[ctx.dataIndex];
+                                    let label = '€ ' + ctx.raw.toLocaleString('it-IT');
+                                    if (item.percentage !== undefined) {
+                                        label += ` (${item.percentage.toFixed(1)}%)`;
+                                    }
+                                    return label;
+                                }
                             }
                         }
                     },
@@ -1575,6 +1735,58 @@
                         y: {
                             ticks: { color: '#e2e8f0' },
                             grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPieChart(data) {
+            clearEmptyChartMessage();
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map((_, i) => COLORS[i % COLORS.length]),
+                        borderColor: '#1e293b',
+                        borderWidth: 3,
+                        borderRadius: 8,
+                        spacing: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'left',
+                            labels: {
+                                color: '#e2e8f0',
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const item = data[ctx.dataIndex];
+                                    return `€ ${ctx.raw.toLocaleString('it-IT')} (${item.percentage.toFixed(1)}%)`;
+                                }
+                            }
                         }
                     }
                 }
@@ -1640,4 +1852,3 @@
     </script>
 </body>
 </html>
-
