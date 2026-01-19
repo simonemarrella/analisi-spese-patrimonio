@@ -629,6 +629,82 @@
             height: 100%;
         }
         
+        /* Tooltip per i puntini nella legenda */
+        .legend-tooltip {
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transform: translateX(-50%);
+        }
+        
+        /* Indicatore categorie extra per il grafico a barre */
+        .more-categories-indicator {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0 4px 0;
+            cursor: pointer;
+        }
+        .more-categories-indicator .dots {
+            color: #64748b;
+            font-size: 18px;
+            letter-spacing: 2px;
+            padding: 4px 16px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .more-categories-indicator:hover .dots {
+            color: #94a3b8;
+            background: rgba(99, 102, 241, 0.2);
+        }
+        
+        /* Tooltip per l'indicatore */
+        .indicator-tooltip {
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+        
+        /* Tooltip per il grafico a barre */
+        .bar-chart-tooltip {
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+        
         @media (max-width: 768px) {
             body {
                 padding: 16px;
@@ -656,6 +732,11 @@
             .filter-select {
                 min-width: 0;
                 flex: 1;
+            }
+            /* Pie chart con legenda sotto su mobile */
+            .chart-container.pie-chart {
+                height: auto;
+                min-height: 450px;
             }
         }
         
@@ -799,7 +880,8 @@
                 font-size: 13px;
             }
             .chart-container.pie-chart {
-                height: 350px;
+                height: auto;
+                min-height: 500px;
                 padding: 16px 0;
             }
         }
@@ -829,7 +911,7 @@
                 font-size: 11px;
             }
             .chart-container.pie-chart {
-                height: 300px;
+                min-height: 550px;
             }
         }
     </style>
@@ -989,6 +1071,7 @@
         
         let chartInstance = null;
         let accountsChartInstance = null;
+        let barChartListeners = { mousemove: null, mouseleave: null };
         let allTransactions = [];
         let allRows = [];
         let accountBalances = {};
@@ -1028,6 +1111,11 @@
 
         // Font globale Montserrat
         Chart.defaults.font.family = "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+        // Funzione helper per determinare la posizione della legenda
+        function getLegendPosition() {
+            return window.innerWidth <= 768 ? 'bottom' : 'left';
+        }
 
         // Eventi upload
         uploadBtn.addEventListener('click', () => fileInput.click());
@@ -1147,15 +1235,34 @@
         // Info button toggle - delegato al documento per elementi dinamici
         document.addEventListener('click', (e) => {
             const infoBtn = e.target.closest('.info-btn');
+            const indicator = e.target.closest('.more-categories-indicator');
+            const chartContainer = e.target.closest('#chartContainer');
+            
             if (infoBtn) {
                 e.stopPropagation();
                 infoBtn.classList.toggle('active');
-            } else {
+            } else if (!indicator && !chartContainer) {
                 // Chiudi tutti i tooltip info se si clicca fuori
                 document.querySelectorAll('.info-btn.active').forEach(btn => {
                     btn.classList.remove('active');
                 });
+                // Chiudi anche i tooltip dei grafici
+                hideLegendTooltip();
+                hideIndicatorTooltip();
+                hideBarChartTooltip();
             }
+        });
+
+        // Listener per il resize della finestra - aggiorna il grafico a torta se attivo
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (currentChartType === 'pie' && chartInstance) {
+                    // Ricostruisci il grafico per aggiornare la posizione della legenda
+                    updateDisplay();
+                }
+            }, 250);
         });
 
         function updateChartTypeVisibility() {
@@ -1576,17 +1683,21 @@
                 }))
                 .sort((a, b) => b.value - a.value);
 
-            const chartData = data.slice(0, 15);
-            
-            if (chartData.length === 0) {
+            if (data.length === 0) {
                 renderEmptyChart('Nessuna spesa nel periodo selezionato');
                 return;
             }
             
             if (currentChartType === 'pie') {
-                renderPieChart(chartData);
+                // Per il grafico a torta, mostra solo le prime 10 voci
+                const chartData = data.slice(0, 10);
+                const extraCount = Math.max(0, data.length - 10);
+                renderPieChart(chartData, extraCount, isSubcategory);
             } else {
-                renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]));
+                // Per il grafico a barre, mostra fino a 15 voci
+                const chartData = data.slice(0, 15);
+                const extraCount = Math.max(0, data.length - 15);
+                renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]), extraCount, isSubcategory);
             }
         }
 
@@ -1616,7 +1727,7 @@
                 
                 document.getElementById('chartContainer').classList.remove('flow-multi');
                 document.getElementById('chartContainer').style.height = '150px';
-                renderBarChart(data, ['#4ade80', '#f87171']);
+                renderBarChart(data, ['#4ade80', '#f87171'], 0, false);
             } else {
                 // Multipli mesi: raggruppa per mese
                 const monthlyData = {};
@@ -1665,6 +1776,19 @@
             const canvas = document.getElementById('chart');
             const container = document.getElementById('chartContainer');
             
+            // Rimuovi eventuale tooltip e indicatori
+            hideLegendTooltip();
+            hideIndicatorTooltip();
+            hideBarChartTooltip();
+            const existingTooltip = container.querySelector('.legend-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+            const existingIndicatorTooltip = container.querySelector('.indicator-tooltip');
+            if (existingIndicatorTooltip) existingIndicatorTooltip.remove();
+            const existingBarTooltip = container.querySelector('.bar-chart-tooltip');
+            if (existingBarTooltip) existingBarTooltip.remove();
+            const existingIndicator = container.querySelector('.more-categories-indicator');
+            if (existingIndicator) existingIndicator.remove();
+            
             // Nascondi il canvas e mostra un messaggio
             canvas.style.display = 'none';
             
@@ -1687,20 +1811,60 @@
             if (existingMsg) existingMsg.remove();
         }
 
-        function renderBarChart(data, colors) {
+        function renderBarChart(data, colors, extraCount, isSubcategory) {
             clearEmptyChartMessage();
             if (chartInstance) {
                 chartInstance.destroy();
             }
+            
+            // Rimuovi i vecchi listener se esistono
+            const oldCanvas = document.getElementById('chart');
+            if (barChartListeners.mousemove) {
+                oldCanvas.removeEventListener('mousemove', barChartListeners.mousemove);
+                barChartListeners.mousemove = null;
+            }
+            if (barChartListeners.mouseleave) {
+                oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
+                barChartListeners.mouseleave = null;
+            }
+            
+            // Rimuovi eventuale tooltip e indicatore della legenda
+            hideLegendTooltip();
+            hideIndicatorTooltip();
+            hideBarChartTooltip();
+            const container = document.getElementById('chartContainer');
+            const existingTooltip = container.querySelector('.legend-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+            const existingIndicatorTooltip = container.querySelector('.indicator-tooltip');
+            if (existingIndicatorTooltip) existingIndicatorTooltip.remove();
+            const existingBarTooltip = container.querySelector('.bar-chart-tooltip');
+            if (existingBarTooltip) existingBarTooltip.remove();
+            const existingIndicator = container.querySelector('.more-categories-indicator');
+            if (existingIndicator) existingIndicator.remove();
 
             const ctx = document.getElementById('chart').getContext('2d');
+            const categoryType = isSubcategory ? 'sottocategorie' : 'categorie';
+            const hasExtra = extraCount && extraCount > 0;
+            
+            // Prepara le labels e i dati
+            const labels = data.map(d => d.name);
+            const values = data.map(d => d.value);
+            const barColors = [...colors];
+            
+            // Aggiungi "•••" come ultima etichetta se ci sono voci extra
+            if (hasExtra) {
+                labels.push('•••');
+                values.push(null); // Nessuna barra per i puntini
+                barColors.push('transparent');
+            }
+            
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(d => d.name),
+                    labels: labels,
                     datasets: [{
-                        data: data.map(d => d.value),
-                        backgroundColor: colors,
+                        data: values,
+                        backgroundColor: barColors,
                         borderRadius: 6,
                         borderSkipped: false
                     }]
@@ -1709,11 +1873,36 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: function(e, elements, chart) {
+                        if (!hasExtra) return;
+                        
+                        // Verifica che l'asse Y esista
+                        if (!chart.scales || !chart.scales.y) return;
+                        
+                        // Verifica se il click è sulla riga dei puntini
+                        const yAxis = chart.scales.y;
+                        const rect = chart.canvas.getBoundingClientRect();
+                        const y = e.native.clientY - rect.top;
+                        
+                        // Trova l'indice della label più vicina
+                        const labelIndex = yAxis.getValueForPixel(y);
+                        const roundedIndex = Math.round(labelIndex);
+                        
+                        // Se è l'ultima label (i puntini)
+                        if (roundedIndex === labels.length - 1) {
+                            toggleBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chart);
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            filter: function(tooltipItem) {
+                                // Non mostrare tooltip per i puntini
+                                return tooltipItem.dataIndex < data.length;
+                            },
                             callbacks: {
                                 label: (ctx) => {
+                                    if (ctx.dataIndex >= data.length) return '';
                                     const item = data[ctx.dataIndex];
                                     let label = '€ ' + ctx.raw.toLocaleString('it-IT');
                                     if (item.percentage !== undefined) {
@@ -1733,21 +1922,149 @@
                             grid: { color: '#334155' }
                         },
                         y: {
-                            ticks: { color: '#e2e8f0' },
+                            ticks: { 
+                                color: function(context) {
+                                    // Colore diverso per i puntini
+                                    if (hasExtra && context.index === labels.length - 1) {
+                                        return '#64748b';
+                                    }
+                                    return '#e2e8f0';
+                                }
+                            },
                             grid: { display: false }
                         }
                     }
                 }
             });
+            
+            // Aggiungi listener per hover sui puntini (solo desktop)
+            if (hasExtra && !('ontouchstart' in window)) {
+                const canvas = ctx.canvas;
+                
+                barChartListeners.mousemove = function(e) {
+                    // Verifica che chartInstance esista e sia un grafico a barre con asse Y
+                    if (!chartInstance || !chartInstance.scales || !chartInstance.scales.y) {
+                        return;
+                    }
+                    
+                    const yAxis = chartInstance.scales.y;
+                    const rect = canvas.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    
+                    const labelIndex = yAxis.getValueForPixel(y);
+                    const roundedIndex = Math.round(labelIndex);
+                    
+                    if (roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < 0.5) {
+                        showBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chartInstance);
+                    } else {
+                        hideBarChartTooltip();
+                    }
+                };
+                
+                barChartListeners.mouseleave = function() {
+                    hideBarChartTooltip();
+                };
+                
+                canvas.addEventListener('mousemove', barChartListeners.mousemove);
+                canvas.addEventListener('mouseleave', barChartListeners.mouseleave);
+            }
+        }
+        
+        // Funzioni per il tooltip del grafico a barre
+        function showBarChartTooltip(event, text, chart) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.bar-chart-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'bar-chart-tooltip';
+                container.appendChild(tooltip);
+            }
+            tooltip.textContent = text;
+            tooltip.style.opacity = '1';
+            tooltip.style.visibility = 'visible';
+            
+            // Posiziona il tooltip vicino all'asse Y, sotto l'ultima etichetta
+            const rect = container.getBoundingClientRect();
+            const chartArea = chart.chartArea;
+            
+            // Posiziona a sinistra del grafico (dove sono le etichette)
+            const x = chartArea.left / 2;
+            const y = event.native ? (event.native.clientY - rect.top) : (chartArea.bottom - 20);
+            
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = (y + 20) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            
+            // Verifica bordi
+            const tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.left < 10) {
+                tooltip.style.left = '10px';
+                tooltip.style.transform = 'translate(0, -100%)';
+            } else if (tooltipRect.right > window.innerWidth - 10) {
+                tooltip.style.left = 'auto';
+                tooltip.style.right = '10px';
+                tooltip.style.transform = 'translate(0, -100%)';
+            }
+        }
+        
+        function toggleBarChartTooltip(event, text, chart) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.bar-chart-tooltip');
+            
+            if (tooltip && tooltip.style.opacity === '1') {
+                hideBarChartTooltip();
+            } else {
+                showBarChartTooltip(event, text, chart);
+            }
+        }
+        
+        function hideBarChartTooltip() {
+            const tooltip = document.querySelector('.bar-chart-tooltip');
+            if (tooltip) {
+                tooltip.style.opacity = '0';
+                tooltip.style.visibility = 'hidden';
+            }
         }
 
-        function renderPieChart(data) {
+        function renderPieChart(data, extraCount, isSubcategory) {
             clearEmptyChartMessage();
             if (chartInstance) {
                 chartInstance.destroy();
             }
+            
+            // Rimuovi i listener del grafico a barre se esistono
+            const oldCanvas = document.getElementById('chart');
+            if (barChartListeners.mousemove) {
+                oldCanvas.removeEventListener('mousemove', barChartListeners.mousemove);
+                barChartListeners.mousemove = null;
+            }
+            if (barChartListeners.mouseleave) {
+                oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
+                barChartListeners.mouseleave = null;
+            }
+            
+            // Rimuovi eventuali tooltip e indicatori precedenti
+            hideLegendTooltip();
+            hideIndicatorTooltip();
+            hideBarChartTooltip();
+            const container = document.getElementById('chartContainer');
+            const existingTooltip = container.querySelector('.legend-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+            const existingIndicatorTooltip = container.querySelector('.indicator-tooltip');
+            if (existingIndicatorTooltip) existingIndicatorTooltip.remove();
+            const existingBarTooltip = container.querySelector('.bar-chart-tooltip');
+            if (existingBarTooltip) existingBarTooltip.remove();
+            const existingIndicator = container.querySelector('.more-categories-indicator');
+            if (existingIndicator) existingIndicator.remove();
 
             const ctx = document.getElementById('chart').getContext('2d');
+            const legendPosition = getLegendPosition();
+            const categoryType = isSubcategory ? 'sottocategorie' : 'categorie';
+            
+            // Salvo riferimenti per l'uso nelle callback
+            const chartData = data;
+            const chartExtraCount = extraCount;
+            
             chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -1769,21 +2086,86 @@
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'left',
+                            position: legendPosition,
                             labels: {
                                 color: '#e2e8f0',
-                                padding: 12,
+                                padding: legendPosition === 'bottom' ? 16 : 12,
                                 usePointStyle: true,
                                 pointStyle: 'circle',
                                 font: {
-                                    size: 11
+                                    size: legendPosition === 'bottom' ? 10 : 11
+                                },
+                                generateLabels: function(chart) {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const originalLabels = [];
+                                    
+                                    chart.data.labels.forEach((label, i) => {
+                                        const isHidden = meta.data[i] && meta.data[i].hidden;
+                                        originalLabels.push({
+                                            text: label,
+                                            fillStyle: isHidden ? '#475569' : chart.data.datasets[0].backgroundColor[i],
+                                            strokeStyle: isHidden ? '#475569' : chart.data.datasets[0].backgroundColor[i],
+                                            lineWidth: 0,
+                                            pointStyle: 'circle',
+                                            hidden: false,
+                                            index: i,
+                                            fontColor: isHidden ? '#64748b' : '#e2e8f0'
+                                        });
+                                    });
+                                    
+                                    // Aggiungi voce "•••" se ci sono voci extra
+                                    if (chartExtraCount > 0) {
+                                        originalLabels.push({
+                                            text: '•••',
+                                            fillStyle: 'transparent',
+                                            strokeStyle: 'transparent',
+                                            lineWidth: 0,
+                                            pointStyle: false,
+                                            hidden: false,
+                                            index: chartData.length,
+                                            fontColor: '#64748b'
+                                        });
+                                    }
+                                    
+                                    return originalLabels;
+                                }
+                            },
+                            onClick: function(e, legendItem, legend) {
+                                // Gestione click sui puntini "•••"
+                                if (legendItem.index >= chartData.length) {
+                                    toggleLegendTooltip(e, `Altre ${chartExtraCount} ${categoryType} non visualizzate`);
+                                    return;
+                                }
+                                // Comportamento default: toggle visibilità del segmento
+                                const chart = legend.chart;
+                                const index = legendItem.index;
+                                const meta = chart.getDatasetMeta(0);
+                                
+                                if (meta.data[index]) {
+                                    meta.data[index].hidden = !meta.data[index].hidden;
+                                    chart.update();
+                                }
+                            },
+                            onHover: function(e, legendItem, legend) {
+                                // Solo su desktop (no touch)
+                                if (!('ontouchstart' in window)) {
+                                    if (legendItem && legendItem.index >= chartData.length && chartExtraCount > 0) {
+                                        showLegendTooltip(e, `Altre ${chartExtraCount} ${categoryType} non visualizzate`);
+                                    } else {
+                                        hideLegendTooltip();
+                                    }
+                                }
+                            },
+                            onLeave: function() {
+                                if (!('ontouchstart' in window)) {
+                                    hideLegendTooltip();
                                 }
                             }
                         },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
-                                    const item = data[ctx.dataIndex];
+                                    const item = chartData[ctx.dataIndex];
                                     return `€ ${ctx.raw.toLocaleString('it-IT')} (${item.percentage.toFixed(1)}%)`;
                                 }
                             }
@@ -1792,12 +2174,158 @@
                 }
             });
         }
+        
+        function showLegendTooltip(event, text) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.legend-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'legend-tooltip';
+                container.appendChild(tooltip);
+            }
+            tooltip.textContent = text;
+            tooltip.style.opacity = '1';
+            tooltip.style.visibility = 'visible';
+            
+            // Posiziona il tooltip vicino al mouse, verificando i bordi
+            const rect = container.getBoundingClientRect();
+            const x = event.native.clientX - rect.left;
+            const y = event.native.clientY - rect.top;
+            
+            // Prima imposta la posizione base per calcolare le dimensioni
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = (y - 40) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            
+            // Verifica se esce dai bordi e correggi
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            // Bordo sinistro
+            if (tooltipRect.left < 10) {
+                tooltip.style.left = '10px';
+                tooltip.style.transform = 'translateX(0)';
+            }
+            // Bordo destro
+            else if (tooltipRect.right > window.innerWidth - 10) {
+                tooltip.style.left = 'auto';
+                tooltip.style.right = '10px';
+                tooltip.style.transform = 'translateX(0)';
+            }
+        }
+        
+        function toggleLegendTooltip(event, text) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.legend-tooltip');
+            
+            // Verifica se il tooltip è già visibile
+            if (tooltip && tooltip.style.opacity === '1') {
+                hideLegendTooltip();
+            } else {
+                showLegendTooltip(event, text);
+            }
+        }
+        
+        function hideLegendTooltip() {
+            const tooltip = document.querySelector('.legend-tooltip');
+            if (tooltip) {
+                tooltip.style.opacity = '0';
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.right = '';
+                tooltip.style.transform = 'translateX(-50%)';
+            }
+        }
+        
+        // Funzioni per l'indicatore nel grafico a barre
+        function showIndicatorTooltip(indicator) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.indicator-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'indicator-tooltip';
+                container.appendChild(tooltip);
+            }
+            
+            const text = indicator.getAttribute('data-tooltip');
+            tooltip.textContent = text;
+            tooltip.style.opacity = '1';
+            tooltip.style.visibility = 'visible';
+            
+            // Posiziona sopra l'indicatore
+            const indicatorRect = indicator.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const x = indicatorRect.left - containerRect.left + (indicatorRect.width / 2);
+            const y = indicatorRect.top - containerRect.top - 10;
+            
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+            tooltip.style.transform = 'translate(-50%, -100%)';
+            
+            // Verifica bordi
+            const tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.left < 10) {
+                tooltip.style.left = '10px';
+                tooltip.style.transform = 'translate(0, -100%)';
+            } else if (tooltipRect.right > window.innerWidth - 10) {
+                tooltip.style.left = 'auto';
+                tooltip.style.right = '10px';
+                tooltip.style.transform = 'translate(0, -100%)';
+            }
+        }
+        
+        function toggleIndicatorTooltip(indicator) {
+            const container = document.getElementById('chartContainer');
+            let tooltip = container.querySelector('.indicator-tooltip');
+            
+            if (tooltip && tooltip.style.opacity === '1') {
+                hideIndicatorTooltip();
+            } else {
+                showIndicatorTooltip(indicator);
+                // Auto-hide dopo 3 secondi
+                setTimeout(() => {
+                    hideIndicatorTooltip();
+                }, 3000);
+            }
+        }
+        
+        function hideIndicatorTooltip() {
+            const tooltip = document.querySelector('.indicator-tooltip');
+            if (tooltip) {
+                tooltip.style.opacity = '0';
+                tooltip.style.visibility = 'hidden';
+            }
+        }
 
         function renderGroupedBarChart(labels, incomeData, expensesData) {
             clearEmptyChartMessage();
             if (chartInstance) {
                 chartInstance.destroy();
             }
+            
+            // Rimuovi i listener del grafico a barre se esistono
+            const oldCanvas = document.getElementById('chart');
+            if (barChartListeners.mousemove) {
+                oldCanvas.removeEventListener('mousemove', barChartListeners.mousemove);
+                barChartListeners.mousemove = null;
+            }
+            if (barChartListeners.mouseleave) {
+                oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
+                barChartListeners.mouseleave = null;
+            }
+            
+            // Rimuovi eventuale tooltip e indicatori
+            hideLegendTooltip();
+            hideIndicatorTooltip();
+            hideBarChartTooltip();
+            const container = document.getElementById('chartContainer');
+            const existingTooltip = container.querySelector('.legend-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+            const existingIndicatorTooltip = container.querySelector('.indicator-tooltip');
+            if (existingIndicatorTooltip) existingIndicatorTooltip.remove();
+            const existingBarTooltip = container.querySelector('.bar-chart-tooltip');
+            if (existingBarTooltip) existingBarTooltip.remove();
+            const existingIndicator = container.querySelector('.more-categories-indicator');
+            if (existingIndicator) existingIndicator.remove();
 
             const ctx = document.getElementById('chart').getContext('2d');
             chartInstance = new Chart(ctx, {
