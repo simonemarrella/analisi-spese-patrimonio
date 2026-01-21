@@ -697,13 +697,15 @@
             padding: 8px 12px;
             font-size: 12px;
             color: #e2e8f0;
-            white-space: nowrap;
+            white-space: normal;
+            text-align: center;
             opacity: 0;
             visibility: hidden;
             transition: all 0.2s;
             z-index: 100;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             pointer-events: none;
+            max-width: 200px;
         }
         
         @media (max-width: 768px) {
@@ -1901,25 +1903,38 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: function(e, elements, chart) {
-                        if (!hasExtra) return;
-                        
                         // Verifica che l'asse Y esista
                         if (!chart.scales || !chart.scales.y) return;
                         
-                        // Verifica se il click è sulla riga dei puntini
                         const yAxis = chart.scales.y;
                         const rect = chart.canvas.getBoundingClientRect();
                         const y = e.native.clientY - rect.top;
+                        const x = e.native.clientX - rect.left;
                         
                         // Trova l'indice della label più vicina
                         const labelIndex = yAxis.getValueForPixel(y);
                         const roundedIndex = Math.round(labelIndex);
-                        
-                        // Se è l'ultima label (i puntini) - soglia più alta per touch
                         const threshold = ('ontouchstart' in window) ? 0.8 : 0.5;
-                        if (roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < threshold) {
+                        
+                        // Se è l'ultima label (i puntini)
+                        if (hasExtra && roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < threshold) {
                             e.native.stopPropagation();
                             toggleBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chart);
+                            return;
+                        }
+                        
+                        // Se il click è nell'area delle etichette (a sinistra del grafico)
+                        const chartArea = chart.chartArea;
+                        if (x < chartArea.left && roundedIndex >= 0 && roundedIndex < data.length && Math.abs(labelIndex - roundedIndex) < threshold) {
+                            // Mostra tooltip con dettagli della categoria
+                            const item = data[roundedIndex];
+                            let tooltipText = item.name;
+                            tooltipText += `\n€ ${item.value.toLocaleString('it-IT')}`;
+                            if (item.percentage !== undefined) {
+                                tooltipText += ` (${item.percentage.toFixed(1)}%)`;
+                            }
+                            e.native.stopPropagation();
+                            toggleBarChartTooltip(e, tooltipText, chart);
                         }
                     },
                     plugins: {
@@ -2031,7 +2046,8 @@
                 tooltip.className = 'bar-chart-tooltip';
                 container.appendChild(tooltip);
             }
-            tooltip.textContent = text;
+            // Supporta testo multilinea
+            tooltip.innerHTML = text.replace(/\n/g, '<br>');
             tooltip.style.opacity = '1';
             tooltip.style.visibility = 'visible';
             
@@ -2054,7 +2070,7 @@
             
             // Prima imposta la posizione base
             tooltip.style.left = x + 'px';
-            tooltip.style.top = (y - 40) + 'px';
+            tooltip.style.top = (y - 50) + 'px';
             tooltip.style.transform = 'translateX(-50%)';
             tooltip.style.right = '';
             
@@ -2078,7 +2094,10 @@
             const container = document.getElementById('chartContainer');
             let tooltip = container.querySelector('.bar-chart-tooltip');
             
-            if (tooltip && tooltip.style.opacity === '1') {
+            // Controlla se il tooltip è visibile
+            const isVisible = tooltip && (tooltip.style.opacity === '1' || tooltip.style.visibility === 'visible');
+            
+            if (isVisible) {
                 hideBarChartTooltip();
             } else {
                 showBarChartTooltip(event, text, chart);
