@@ -485,6 +485,7 @@
             padding: 20px 0;
             margin-top: 10px;
         }
+        
         .hidden {
             display: none;
         }
@@ -1255,12 +1256,18 @@
 
         // Listener per il resize della finestra - aggiorna il grafico a torta se attivo
         let resizeTimeout;
+        let lastWindowWidth = window.innerWidth;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                if (currentChartType === 'pie' && chartInstance) {
-                    // Ricostruisci il grafico per aggiornare la posizione della legenda
-                    updateDisplay();
+                // Su mobile lo scroll può triggerare resize, controlliamo solo cambio larghezza significativo
+                const newWidth = window.innerWidth;
+                if (Math.abs(newWidth - lastWindowWidth) > 50) {
+                    lastWindowWidth = newWidth;
+                    if (currentChartType === 'pie' && chartInstance) {
+                        // Ricostruisci il grafico per aggiornare la posizione della legenda
+                        updateDisplay();
+                    }
                 }
             }, 250);
         });
@@ -1788,6 +1795,8 @@
             if (existingBarTooltip) existingBarTooltip.remove();
             const existingIndicator = container.querySelector('.more-categories-indicator');
             if (existingIndicator) existingIndicator.remove();
+            const existingLabelsContainer = container.querySelector('.bar-labels-container');
+            if (existingLabelsContainer) existingLabelsContainer.remove();
             
             // Nascondi il canvas e mostra un messaggio
             canvas.style.display = 'none';
@@ -1845,9 +1854,27 @@
             const ctx = document.getElementById('chart').getContext('2d');
             const categoryType = isSubcategory ? 'sottocategorie' : 'categorie';
             const hasExtra = extraCount && extraCount > 0;
+            const isMobile = window.innerWidth <= 768;
             
-            // Prepara le labels e i dati
-            const labels = data.map(d => d.name);
+            // Funzione per preparare l'etichetta visualizzata
+            function prepareLabel(name) {
+                let displayName = name;
+                
+                // Per sottocategorie, estrai solo il nome della sottocategoria
+                if (isSubcategory && name.includes(' → ')) {
+                    displayName = name.split(' → ')[1];
+                }
+                
+                // Tronca - limite più basso su mobile per evitare che Chart.js tronchi dall'inizio
+                const maxChars = isMobile ? 15 : 20;
+                if (displayName.length > maxChars) {
+                    return displayName.substring(0, maxChars - 1) + '…';
+                }
+                return displayName;
+            }
+            
+            // Prepara le labels per Chart.js
+            const labels = data.map(d => prepareLabel(d.name));
             const values = data.map(d => d.value);
             const barColors = [...colors];
             
@@ -1888,8 +1915,10 @@
                         const labelIndex = yAxis.getValueForPixel(y);
                         const roundedIndex = Math.round(labelIndex);
                         
-                        // Se è l'ultima label (i puntini)
-                        if (roundedIndex === labels.length - 1) {
+                        // Se è l'ultima label (i puntini) - soglia più alta per touch
+                        const threshold = ('ontouchstart' in window) ? 0.8 : 0.5;
+                        if (roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < threshold) {
+                            e.native.stopPropagation();
                             toggleBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chart);
                         }
                     },
@@ -1901,6 +1930,16 @@
                                 return tooltipItem.dataIndex < data.length;
                             },
                             callbacks: {
+                                title: (tooltipItems) => {
+                                    // Mostra il nome completo (non troncato)
+                                    if (tooltipItems.length > 0) {
+                                        const idx = tooltipItems[0].dataIndex;
+                                        if (idx < data.length) {
+                                            return data[idx].name;
+                                        }
+                                    }
+                                    return '';
+                                },
                                 label: (ctx) => {
                                     if (ctx.dataIndex >= data.length) return '';
                                     const item = data[ctx.dataIndex];
@@ -1929,7 +1968,11 @@
                                         return '#64748b';
                                     }
                                     return '#e2e8f0';
-                                }
+                                },
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                },
+                                autoSkip: false
                             },
                             grid: { display: false }
                         }
@@ -1937,7 +1980,11 @@
                 }
             });
             
-            // Aggiungi listener per hover sui puntini (solo desktop)
+            // Variabile per tracciare se il tooltip è visibile (per hover su desktop)
+            let tooltipVisible = false;
+            let lastHoveredIndex = -1;
+            
+            // Aggiungi listener per hover sui puntini (solo desktop, no touch)
             if (hasExtra && !('ontouchstart' in window)) {
                 const canvas = ctx.canvas;
                 
@@ -1953,15 +2000,20 @@
                     
                     const labelIndex = yAxis.getValueForPixel(y);
                     const roundedIndex = Math.round(labelIndex);
+                    const isOnDots = roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < 0.5;
                     
-                    if (roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < 0.5) {
+                    // Solo aggiorna se lo stato cambia (evita rimbalzo)
+                    if (isOnDots && lastHoveredIndex !== roundedIndex) {
+                        lastHoveredIndex = roundedIndex;
                         showBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chartInstance);
-                    } else {
+                    } else if (!isOnDots && lastHoveredIndex !== -1) {
+                        lastHoveredIndex = -1;
                         hideBarChartTooltip();
                     }
                 };
                 
                 barChartListeners.mouseleave = function() {
+                    lastHoveredIndex = -1;
                     hideBarChartTooltip();
                 };
                 
@@ -1983,27 +2035,42 @@
             tooltip.style.opacity = '1';
             tooltip.style.visibility = 'visible';
             
-            // Posiziona il tooltip vicino all'asse Y, sotto l'ultima etichetta
+            // Posiziona il tooltip vicino al click/hover
             const rect = container.getBoundingClientRect();
-            const chartArea = chart.chartArea;
+            let x, y;
             
-            // Posiziona a sinistra del grafico (dove sono le etichette)
-            const x = chartArea.left / 2;
-            const y = event.native ? (event.native.clientY - rect.top) : (chartArea.bottom - 20);
+            if (event.native) {
+                x = event.native.clientX - rect.left;
+                y = event.native.clientY - rect.top;
+            } else if (event.clientX) {
+                x = event.clientX - rect.left;
+                y = event.clientY - rect.top;
+            } else {
+                // Fallback: posiziona al centro sotto i puntini
+                const chartArea = chart.chartArea;
+                x = chartArea.left / 2;
+                y = chartArea.bottom;
+            }
             
+            // Prima imposta la posizione base
             tooltip.style.left = x + 'px';
-            tooltip.style.top = (y + 20) + 'px';
+            tooltip.style.top = (y - 40) + 'px';
             tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.right = '';
             
-            // Verifica bordi
+            // Verifica se esce dai bordi e correggi
             const tooltipRect = tooltip.getBoundingClientRect();
+            
+            // Bordo sinistro
             if (tooltipRect.left < 10) {
                 tooltip.style.left = '10px';
-                tooltip.style.transform = 'translate(0, -100%)';
-            } else if (tooltipRect.right > window.innerWidth - 10) {
+                tooltip.style.transform = 'translateX(0)';
+            }
+            // Bordo destro
+            else if (tooltipRect.right > window.innerWidth - 10) {
                 tooltip.style.left = 'auto';
                 tooltip.style.right = '10px';
-                tooltip.style.transform = 'translate(0, -100%)';
+                tooltip.style.transform = 'translateX(0)';
             }
         }
         
@@ -2023,6 +2090,8 @@
             if (tooltip) {
                 tooltip.style.opacity = '0';
                 tooltip.style.visibility = 'hidden';
+                tooltip.style.right = '';
+                tooltip.style.transform = 'translateX(-50%)';
             }
         }
 
@@ -2056,6 +2125,8 @@
             if (existingBarTooltip) existingBarTooltip.remove();
             const existingIndicator = container.querySelector('.more-categories-indicator');
             if (existingIndicator) existingIndicator.remove();
+            const existingLabelsContainer = container.querySelector('.bar-labels-container');
+            if (existingLabelsContainer) existingLabelsContainer.remove();
 
             const ctx = document.getElementById('chart').getContext('2d');
             const legendPosition = getLegendPosition();
@@ -2326,6 +2397,8 @@
             if (existingBarTooltip) existingBarTooltip.remove();
             const existingIndicator = container.querySelector('.more-categories-indicator');
             if (existingIndicator) existingIndicator.remove();
+            const existingLabelsContainer = container.querySelector('.bar-labels-container');
+            if (existingLabelsContainer) existingLabelsContainer.remove();
 
             const ctx = document.getElementById('chart').getContext('2d');
             chartInstance = new Chart(ctx, {
