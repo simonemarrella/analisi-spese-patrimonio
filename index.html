@@ -1074,7 +1074,7 @@
         
         let chartInstance = null;
         let accountsChartInstance = null;
-        let barChartListeners = { mousemove: null, mouseleave: null };
+        let barChartListeners = { mousemove: null, mouseleave: null, click: null };
         let allTransactions = [];
         let allRows = [];
         let accountBalances = {};
@@ -1838,6 +1838,10 @@
                 oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
                 barChartListeners.mouseleave = null;
             }
+            if (barChartListeners.click) {
+                oldCanvas.removeEventListener('click', barChartListeners.click);
+                barChartListeners.click = null;
+            }
             
             // Rimuovi eventuale tooltip e indicatore della legenda
             hideLegendTooltip();
@@ -1902,41 +1906,6 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    onClick: function(e, elements, chart) {
-                        // Verifica che l'asse Y esista
-                        if (!chart.scales || !chart.scales.y) return;
-                        
-                        const yAxis = chart.scales.y;
-                        const rect = chart.canvas.getBoundingClientRect();
-                        const y = e.native.clientY - rect.top;
-                        const x = e.native.clientX - rect.left;
-                        
-                        // Trova l'indice della label più vicina
-                        const labelIndex = yAxis.getValueForPixel(y);
-                        const roundedIndex = Math.round(labelIndex);
-                        const threshold = ('ontouchstart' in window) ? 0.8 : 0.5;
-                        
-                        // Se è l'ultima label (i puntini)
-                        if (hasExtra && roundedIndex === labels.length - 1 && Math.abs(labelIndex - roundedIndex) < threshold) {
-                            e.native.stopPropagation();
-                            toggleBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chart);
-                            return;
-                        }
-                        
-                        // Se il click è nell'area delle etichette (a sinistra del grafico)
-                        const chartArea = chart.chartArea;
-                        if (x < chartArea.left && roundedIndex >= 0 && roundedIndex < data.length && Math.abs(labelIndex - roundedIndex) < threshold) {
-                            // Mostra tooltip con dettagli della categoria
-                            const item = data[roundedIndex];
-                            let tooltipText = item.name;
-                            tooltipText += `\n€ ${item.value.toLocaleString('it-IT')}`;
-                            if (item.percentage !== undefined) {
-                                tooltipText += ` (${item.percentage.toFixed(1)}%)`;
-                            }
-                            e.native.stopPropagation();
-                            toggleBarChartTooltip(e, tooltipText, chart);
-                        }
-                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -1999,9 +1968,48 @@
             let tooltipVisible = false;
             let lastHoveredIndex = -1;
             
+            // Listener click sul canvas per etichette e puntini
+            const canvas = ctx.canvas;
+            
+            barChartListeners.click = function(e) {
+                if (!chartInstance || !chartInstance.scales || !chartInstance.scales.y) return;
+                
+                const yAxis = chartInstance.scales.y;
+                const chartArea = chartInstance.chartArea;
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const x = e.clientX - rect.left;
+                
+                const labelIndex = yAxis.getValueForPixel(y);
+                const roundedIndex = Math.round(labelIndex);
+                const threshold = ('ontouchstart' in window) ? 0.8 : 0.5;
+                
+                // Verifica se siamo nell'area delle etichette o vicino ai puntini
+                if (Math.abs(labelIndex - roundedIndex) < threshold) {
+                    // Se è l'ultima label (i puntini)
+                    if (hasExtra && roundedIndex === labels.length - 1) {
+                        e.stopPropagation();
+                        toggleBarChartTooltip(e, `Altre ${extraCount} ${categoryType} non visualizzate`, chartInstance);
+                        return;
+                    }
+                    
+                    // Se il click è nell'area delle etichette (a sinistra del grafico)
+                    if (x < chartArea.left && roundedIndex >= 0 && roundedIndex < data.length) {
+                        const item = data[roundedIndex];
+                        let tooltipText = item.name;
+                        tooltipText += `\n€ ${item.value.toLocaleString('it-IT')}`;
+                        if (item.percentage !== undefined) {
+                            tooltipText += ` (${item.percentage.toFixed(1)}%)`;
+                        }
+                        e.stopPropagation();
+                        toggleBarChartTooltip(e, tooltipText, chartInstance);
+                    }
+                }
+            };
+            canvas.addEventListener('click', barChartListeners.click);
+            
             // Aggiungi listener per hover sui puntini (solo desktop, no touch)
             if (hasExtra && !('ontouchstart' in window)) {
-                const canvas = ctx.canvas;
                 
                 barChartListeners.mousemove = function(e) {
                     // Verifica che chartInstance esista e sia un grafico a barre con asse Y
@@ -2129,6 +2137,10 @@
             if (barChartListeners.mouseleave) {
                 oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
                 barChartListeners.mouseleave = null;
+            }
+            if (barChartListeners.click) {
+                oldCanvas.removeEventListener('click', barChartListeners.click);
+                barChartListeners.click = null;
             }
             
             // Rimuovi eventuali tooltip e indicatori precedenti
@@ -2401,6 +2413,10 @@
             if (barChartListeners.mouseleave) {
                 oldCanvas.removeEventListener('mouseleave', barChartListeners.mouseleave);
                 barChartListeners.mouseleave = null;
+            }
+            if (barChartListeners.click) {
+                oldCanvas.removeEventListener('click', barChartListeners.click);
+                barChartListeners.click = null;
             }
             
             // Rimuovi eventuale tooltip e indicatori
