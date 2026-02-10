@@ -128,6 +128,11 @@
             opacity: 1;
             visibility: visible;
         }
+        .info-tooltip.wide {
+            white-space: normal;
+            max-width: 260px;
+            text-align: center;
+        }
         .upload-btn {
             width: 38px;
             height: 38px;
@@ -1027,14 +1032,14 @@
                 <div class="card-header">
                     <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
                     <div class="chart-type-toggle" id="chartTypeToggle">
-                        <button class="chart-type-btn active" data-type="bar" title="Grafico a barre">
+                        <button class="chart-type-btn" data-type="bar" title="Grafico a barre">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="20" x2="18" y2="10"></line>
                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                 <line x1="6" y1="20" x2="6" y2="14"></line>
                             </svg>
                         </button>
-                        <button class="chart-type-btn" data-type="pie" title="Grafico a torta">
+                        <button class="chart-type-btn active" data-type="pie" title="Grafico a torta">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                                 <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
@@ -1082,7 +1087,7 @@
         let currentYear = 'all';
         let currentMonth = 'all';
         let currentCategory = 'all';
-        let currentChartType = 'bar';
+        let currentChartType = 'pie';
 
         const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
                             'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -1567,7 +1572,7 @@
                 </div>
                 <div class="results-group">
                     <div class="result-card">
-                        <div class="result-label">Variazione Totale</div>
+                        <div class="result-label">Variazione Totale <button class="info-btn" title="Info variazione">i<span class="info-tooltip wide">La variazione totale di patrimonio tiene conto di entrate, uscite, trasferimenti, correzioni saldo</span></button></div>
                         <div class="result-value ${variation >= 0 ? 'positive' : 'negative'}">${variationDisplay}</div>
                     </div>
                     <div class="result-card">
