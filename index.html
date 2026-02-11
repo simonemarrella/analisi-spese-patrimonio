@@ -494,6 +494,127 @@
         .hidden {
             display: none;
         }
+        
+        /* Data table */
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 16px;
+            margin-right: -8px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+        }
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+            margin: 4px 0;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .data-table th {
+            background: #0f172a;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #475569;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+        .data-table th:hover {
+            color: #e2e8f0;
+        }
+        .data-table th.sorted-asc::after,
+        .data-table th.sorted-desc::after {
+            margin-left: 4px;
+            color: #6366f1;
+        }
+        .data-table th.sorted-asc::after {
+            content: ' ▲';
+        }
+        .data-table th.sorted-desc::after {
+            content: ' ▼';
+        }
+        .data-table th:nth-child(2),
+        .data-table th:nth-child(3) {
+            text-align: right;
+        }
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+        }
+        .data-table td:nth-child(2),
+        .data-table td:nth-child(3) {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .data-table td:nth-child(2) {
+            font-weight: 600;
+            color: #f87171;
+        }
+        .data-table td:nth-child(3) {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .data-table tbody tr {
+            transition: background 0.15s;
+        }
+        .data-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .data-table .table-color-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .data-table .category-cell {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .data-table .category-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .data-table tfoot td {
+            padding: 12px;
+            font-weight: 700;
+            border-top: 2px solid #475569;
+            border-bottom: none;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.5);
+        }
         .flow-summary {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1032,17 +1153,25 @@
                 <div class="card-header">
                     <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
                     <div class="chart-type-toggle" id="chartTypeToggle">
+                        <button class="chart-type-btn active" data-type="table" title="Tabella completa">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="3" y1="15" x2="21" y2="15"></line>
+                                <line x1="12" y1="3" x2="12" y2="21"></line>
+                            </svg>
+                        </button>
+                        <button class="chart-type-btn" data-type="pie" title="Grafico a torta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                            </svg>
+                        </button>
                         <button class="chart-type-btn" data-type="bar" title="Grafico a barre">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="20" x2="18" y2="10"></line>
                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                 <line x1="6" y1="20" x2="6" y2="14"></line>
-                            </svg>
-                        </button>
-                        <button class="chart-type-btn active" data-type="pie" title="Grafico a torta">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
-                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                             </svg>
                         </button>
                     </div>
@@ -1059,6 +1188,14 @@
                 </div>
                 <div class="chart-container" id="chartContainer">
                     <canvas id="chart"></canvas>
+                </div>
+                <div class="table-container hidden" id="tableContainer">
+                    <div class="data-table-wrapper">
+                        <table class="data-table" id="dataTable">
+                            <thead><tr><th>Categoria</th><th>Importo</th><th>%</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1087,7 +1224,7 @@
         let currentYear = 'all';
         let currentMonth = 'all';
         let currentCategory = 'all';
-        let currentChartType = 'pie';
+        let currentChartType = 'table';
 
         const MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
                             'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -1605,6 +1742,7 @@
             
             const flowSummary = document.getElementById('flowSummary');
             const chartContainer = document.getElementById('chartContainer');
+            const tableContainer = document.getElementById('tableContainer');
             
             // Aggiorna sempre il summary con i dati filtrati
             updateFlowSummary(transactions);
@@ -1614,19 +1752,31 @@
             
             if (currentView === 'flussi') {
                 flowSummary.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                chartContainer.classList.remove('hidden');
                 updateFlowChart(transactions);
             } else {
                 flowSummary.classList.add('hidden');
                 chartContainer.classList.remove('flow-multi');
-                chartContainer.style.height = currentChartType === 'pie' ? '' : '350px';
                 
-                if (currentChartType === 'pie') {
-                    chartContainer.classList.add('pie-chart');
-                } else {
+                if (currentChartType === 'table') {
+                    chartContainer.classList.add('hidden');
+                    tableContainer.classList.remove('hidden');
                     chartContainer.classList.remove('pie-chart');
+                    updateCategoryTable(transactions);
+                } else {
+                    tableContainer.classList.add('hidden');
+                    chartContainer.classList.remove('hidden');
+                    chartContainer.style.height = currentChartType === 'pie' ? '' : '350px';
+                    
+                    if (currentChartType === 'pie') {
+                        chartContainer.classList.add('pie-chart');
+                    } else {
+                        chartContainer.classList.remove('pie-chart');
+                    }
+                    
+                    updateCategoryChart(transactions);
                 }
-                
-                updateCategoryChart(transactions);
             }
         }
 
@@ -1713,6 +1863,108 @@
                 const extraCount = Math.max(0, data.length - 15);
                 renderBarChart(chartData, chartData.map((_, i) => COLORS[i % COLORS.length]), extraCount, isSubcategory);
             }
+        }
+
+        function updateCategoryTable(transactions) {
+            const isSubcategory = currentView === 'sottocategorie';
+            const title = isSubcategory ? 'Spese per Sottocategoria' : 'Spese per Categoria';
+            document.getElementById('chartTitle').textContent = title;
+
+            // Calcola totali (solo spese, amount < 0)
+            const totals = {};
+            transactions.forEach(t => {
+                if (t.amount < 0) {
+                    const cat = t['category name'] || 'Altro';
+                    const sub = t['subcategory name'] || 'Generale';
+                    const key = isSubcategory ? `${cat} → ${sub}` : cat;
+                    totals[key] = (totals[key] || 0) + Math.abs(t.amount);
+                }
+            });
+
+            const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
+
+            let tableData = Object.entries(totals)
+                .map(([name, value]) => ({
+                    name,
+                    value: Math.round(value * 100) / 100,
+                    percentage: grandTotal > 0 ? (value / grandTotal * 100) : 0
+                }))
+                .sort((a, b) => b.value - a.value);
+
+            const table = document.getElementById('dataTable');
+            const thead = table.querySelector('thead tr');
+            thead.innerHTML = `<th data-col="name">${isSubcategory ? 'Sottocategoria' : 'Categoria'}</th><th data-col="value">Importo</th><th data-col="percentage">%</th>`;
+            
+            // Stato ordinamento
+            let sortCol = 'value';
+            let sortDir = 'desc';
+            
+            function renderTableBody() {
+                const tbody = table.querySelector('tbody');
+                
+                if (tableData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:40px;">Nessuna spesa nel periodo selezionato</td></tr>';
+                    // Rimuovi footer se presente
+                    const existingFoot = table.querySelector('tfoot');
+                    if (existingFoot) existingFoot.remove();
+                    return;
+                }
+                
+                tbody.innerHTML = tableData.map((item, i) => `
+                    <tr>
+                        <td><div class="category-cell"><span class="table-color-dot" style="background:${COLORS[i % COLORS.length]}"></span><span class="category-name">${item.name}</span></div></td>
+                        <td>€ ${item.value.toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                        <td>${item.percentage.toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+                
+                // Footer con totale
+                let tfoot = table.querySelector('tfoot');
+                if (!tfoot) {
+                    tfoot = document.createElement('tfoot');
+                    table.appendChild(tfoot);
+                }
+                tfoot.innerHTML = `<tr>
+                    <td>Totale (${tableData.length})</td>
+                    <td>€ ${grandTotal.toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                    <td>100%</td>
+                </tr>`;
+                
+                // Aggiorna indicatori ordinamento sugli header
+                thead.querySelectorAll('th').forEach(th => {
+                    th.classList.remove('sorted-asc', 'sorted-desc');
+                    if (th.dataset.col === sortCol) {
+                        th.classList.add(sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                    }
+                });
+            }
+            
+            // Click handler per ordinamento colonne
+            thead.querySelectorAll('th').forEach(th => {
+                th.onclick = () => {
+                    const col = th.dataset.col;
+                    if (sortCol === col) {
+                        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortCol = col;
+                        sortDir = col === 'name' ? 'asc' : 'desc';
+                    }
+                    
+                    tableData.sort((a, b) => {
+                        let cmp;
+                        if (col === 'name') {
+                            cmp = a.name.localeCompare(b.name, 'it');
+                        } else {
+                            cmp = a[col] - b[col];
+                        }
+                        return sortDir === 'asc' ? cmp : -cmp;
+                    });
+                    
+                    renderTableBody();
+                };
+            });
+            
+            renderTableBody();
         }
 
         function updateFlowChart(transactions) {
