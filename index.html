@@ -15,22 +15,31 @@
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth;background:#1e293b}
+html{scroll-behavior:smooth;background:#1e293b;scrollbar-gutter:stable}
 body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1e293b;min-height:100vh;padding:24px;padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom));padding-left:calc(24px + env(safe-area-inset-left));padding-right:calc(24px + env(safe-area-inset-right));color:#e2e8f0;overflow-x:hidden}
 button,input,select,textarea{font-family:inherit}
 .container{max-width:900px;margin:0 auto}
+
+/* ── HEADER: always stable, never shifts ── */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.header-left h1{font-size:1.8rem;margin-bottom:4px;display:flex;align-items:center}
+.header-left h1{font-size:1.8rem;display:flex;align-items:center;white-space:nowrap}
 .header-left h1 svg{color:#6366f1;margin-right:10px;flex-shrink:0}
-.header-left .subtitle{color:#94a3b8;font-size:14px;display:flex;align-items:center;gap:8px}
-.header-left .subtitle.loaded{color:#10b981}
-.header-left .subtitle.error{color:#f87171}
+
+/* ── ERROR BANNER ── */
+.error-banner{display:none;align-items:center;gap:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:10px 16px;margin-bottom:20px;color:#fca5a5;font-size:13px;font-weight:500;animation:bannerIn .2s ease}
+.error-banner.visible{display:flex}
+@keyframes bannerIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.error-banner svg{flex-shrink:0;width:16px;height:16px;stroke:#f87171;fill:none}
+.error-banner-close{margin-left:auto;width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:#f87171;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;opacity:.7;transition:opacity .15s}
+.error-banner-close:hover{opacity:1}
+
 .info-btn{width:18px;height:18px;border-radius:50%;border:1px solid #64748b;background:transparent;color:#64748b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;transition:all .2s;position:relative}
 .info-btn:hover,.info-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.1)}
 .info-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #475569;border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;white-space:nowrap;opacity:0;visibility:hidden;transition:all .2s;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}
 .info-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#475569}
 .info-btn.active .info-tooltip{opacity:1;visibility:visible}
-.info-tooltip.wide{white-space:normal;max-width:370px;min-width: 240px;text-align:center}
+.info-tooltip.wide{white-space:normal;max-width:370px;min-width:240px;text-align:center}
+
 /* Header buttons */
 .header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .upload-btn,.gdrive-btn{width:38px;height:38px;border-radius:10px;border:1px solid #475569;background:rgba(51,65,85,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:#94a3b8;flex-shrink:0}
@@ -41,7 +50,7 @@ button,input,select,textarea{font-family:inherit}
 .gdrive-btn{color:#94a3b8}
 .gdrive-btn svg{fill:currentColor;stroke:none;width:20px;height:20px}
 .file-input{display:none}
-/* Patrimony */
+
 /* Patrimony section */
 .patrimony-section{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:24px;overflow:visible}
 .patrimony-main-row{display:grid;grid-template-columns:56px 1fr 56px;align-items:center;gap:16px;padding:28px 32px}
@@ -53,6 +62,7 @@ button,input,select,textarea{font-family:inherit}
 .toggle-btn svg{width:18px;height:18px;stroke:currentColor;fill:none}
 .toggle-btn:hover{border-color:#6366f1;background:rgba(99,102,241,.2);color:#e2e8f0}
 .toggle-btn.active{border-color:#6366f1;background:rgba(99,102,241,.3);color:#e2e8f0}
+
 /* Panels inside patrimony section */
 .accounts-panel,.historical-panel{display:none;padding:0 32px 24px}
 .accounts-panel.open,.historical-panel.open{display:block}
@@ -73,6 +83,7 @@ button,input,select,textarea{font-family:inherit}
 .result-value.positive{color:#4ade80}
 .result-value.negative{color:#f87171}
 .result-secondary{font-size:11px;color:#64748b;margin-top:4px}
+
 /* Date Range Picker */
 .drp-wrapper{position:relative;display:block;width:100%}
 .drp-input{padding:6px 10px 6px 32px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:13px;cursor:pointer;height:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;min-width:0;transition:border-color .2s;user-select:none;display:flex;align-items:center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center}
@@ -99,19 +110,22 @@ button,input,select,textarea{font-family:inherit}
 .drp-status{font-size:11px;color:#94a3b8;font-style:italic;flex:1;min-height:14px}
 .drp-clear{padding:5px 12px;border:1px solid #475569;background:transparent;color:#94a3b8;border-radius:7px;font-size:11px;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
 .drp-clear:hover{border-color:#f87171;color:#f87171;background:rgba(239,68,68,.1)}
-/* Controls */
-.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.tabs{display:flex;gap:6px}
-.tab{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;background:#334155;color:#cbd5e1}
+
+/* ── Controls: always a single row ── */
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.tabs{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;background:#334155;color:#cbd5e1;flex-shrink:0}
 .tab:hover{background:#475569}
 .tab.active{background:#6366f1;color:white}
-.filter-toggle-btn{margin-left:auto;display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;border:1px solid #475569;background:rgba(51,65,85,.5);color:#94a3b8;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;position:relative}
+.filter-toggle-btn{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;border:1px solid #475569;background:rgba(51,65,85,.5);color:#94a3b8;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;position:relative;white-space:nowrap}
 .filter-toggle-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;flex-shrink:0}
 .filter-toggle-btn:hover{border-color:#6366f1;color:#e2e8f0;background:rgba(99,102,241,.15)}
 .filter-toggle-btn.active{border-color:#6366f1;color:#e2e8f0;background:rgba(99,102,241,.2)}
 .filter-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:#6366f1;color:white;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px}
 .filter-badge.visible{display:flex}
-/* Filter panel — FIX OVERFLOW */
+
+/* Filter panel */
 .filter-panel{background:transparent;border:none;border-top:1px solid #334155;border-radius:0;padding:16px 0 0;margin-top:0;margin-bottom:0;display:none;width:100%}
 .filter-panel.open{display:block;animation:panelIn .15s ease}
 @keyframes panelIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
@@ -135,6 +149,7 @@ button,input,select,textarea{font-family:inherit}
 .transactions-toggle-btn.open svg{transform:rotate(180deg)}
 .clear-all-btn{padding:6px 14px;border-radius:8px;border:1px solid #475569;background:transparent;color:#94a3b8;cursor:pointer;font-size:12px;transition:all .2s;font-family:inherit}
 .clear-all-btn:hover{border-color:#f87171;color:#f87171;background:rgba(239,68,68,.1)}
+
 /* Chart card */
 .card{background:transparent;border:none;border-radius:0;padding:0;margin:0}
 /* Unified analysis section */
@@ -153,6 +168,7 @@ button,input,select,textarea{font-family:inherit}
 .chart-container.pie-chart{height:400px;display:flex;align-items:center;justify-content:center;padding:20px 0;margin-top:10px}
 .hidden{display:none}
 .no-chart-data{text-align:center;color:#64748b;padding:40px;display:flex;align-items:center;justify-content:center;height:100%}
+
 /* Table */
 .table-container{max-height:500px;overflow-y:auto;padding-right:16px;margin-right:-8px;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.5) transparent}
 .table-container::-webkit-scrollbar{width:8px}
@@ -176,6 +192,7 @@ button,input,select,textarea{font-family:inherit}
 .category-cell{display:flex;align-items:center}
 .category-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .data-table tfoot td{padding:12px;font-weight:700;border-top:2px solid #475569;border-bottom:none;color:#e2e8f0;background:rgba(15,23,42,.5)}
+
 /* Flow */
 .flow-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .flow-card{background:rgba(51,65,85,.3);border-radius:8px;padding:12px 16px;text-align:center}
@@ -183,6 +200,7 @@ button,input,select,textarea{font-family:inherit}
 .flow-card .value{font-size:1.3rem;font-weight:600}
 .flow-card .value.green{color:#4ade80}
 .flow-card .value.red{color:#f87171}
+
 /* Transactions */
 .transactions-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:24px}
 .transactions-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -205,17 +223,16 @@ button,input,select,textarea{font-family:inherit}
 .transaction-amount.income{color:#4ade80}
 .transaction-amount.expense{color:#f87171}
 .no-transactions{text-align:center;color:#64748b;padding:40px}
+
 /* Tooltip */
 .legend-tooltip,.bar-chart-tooltip{position:absolute;background:#1e293b;border:1px solid #475569;border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none;transform:translateX(-50%)}
 .bar-chart-tooltip{white-space:normal;text-align:center;max-width:200px}
+
 /* Responsive */
 @media(max-width:768px){
 body{padding:16px;padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 .header-left h1{font-size:1.4rem}
-.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-.tab{flex-shrink:0;padding:10px 14px}
 .chart-container.pie-chart{height:auto;min-height:450px}
-/* Filter panel: single column on tablet */
 .filter-panel-grid{grid-template-columns:1fr}
 .fp-full{grid-column:auto}
 .drp-dropdown{width:255px}
@@ -228,15 +245,17 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
 .accounts-panel,.historical-panel{padding:0 16px 20px}
 .patrimony-value{font-size:2rem}
 .patrimony-toggles{flex-direction:row;justify-content:center}
-.controls{flex-direction:column;align-items:stretch;gap:10px}
-.filter-toggle-btn{margin-left:0;width:100%;justify-content:center}
-/* Force full-width on all filter inputs */
+/* Controls: stay on one row, tabs scroll, filter btn fixed */
+.controls{gap:6px}
+.tabs{gap:4px}
+.tab{padding:8px 11px;font-size:12px}
+.filter-toggle-btn{padding:7px 11px;font-size:12px;gap:5px}
+/* Filter panel full width inputs */
 .filter-panel{padding:12px 0 0}
 .filter-panel-grid{grid-template-columns:1fr;gap:10px}
 .fp-full{grid-column:auto}
 .fp-row{width:100%}
 .fp-input,.fp-select,.drp-input{width:100%;min-width:0;font-size:13px}
-/* Clamp dropdown to viewport */
 .drp-dropdown{width:calc(100vw - 48px);max-width:320px}
 .analysis-section{padding:16px}.analysis-section .card,.analysis-section .transactions-card{padding:16px 0 0}
 .card-header{flex-wrap:wrap;gap:12px}
@@ -247,7 +266,6 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
 .result-card{padding:12px 8px}
 .result-label{font-size:10px}
 .result-value{font-size:1.1rem}
-/* Historical filter full width */
 .historical-filters{flex-direction:column;align-items:stretch}
 .filter-group{width:100%}
 }
@@ -256,6 +274,8 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
 .patrimony-value{font-size:1.6rem}
 .results-group{grid-template-columns:1fr}
 .drp-dropdown{width:calc(100vw - 32px)}
+.tab{padding:7px 9px;font-size:11px}
+.filter-toggle-btn{padding:7px 9px;font-size:11px}
 }
     </style>
 </head>
@@ -264,7 +284,6 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
   <div class="header">
     <div class="header-left">
       <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analisi Spese e Patrimonio</h1>
-      <p class="subtitle" id="subtitle"></p>
     </div>
     <div class="header-actions">
       <div class="gdrive-btn" id="gdriveBtn" title="Apri da Google Drive">
@@ -275,6 +294,13 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
         <input type="file" class="file-input" id="fileInput" accept=".csv">
       </div>
     </div>
+  </div>
+
+  <!-- ERROR BANNER (shown below header, outside results) -->
+  <div class="error-banner" id="errorBanner">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="errorBannerText">File selezionato non corretto!</span>
+    <button class="error-banner-close" id="errorBannerClose" title="Chiudi">&#x2715;</button>
   </div>
 
   <div id="results" class="hidden">
@@ -425,20 +451,16 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
 <script>
 /* ═══════════════════════════════════════════
    GOOGLE DRIVE CONFIGURATION
-   Replace these with your own credentials from
-   Google Cloud Console.
    ═══════════════════════════════════════════ */
 const GOOGLE_CLIENT_ID = '995511225815-m7u2d3dq5mlihlj2aq2lmtb3do1mq4ra.apps.googleusercontent.com';
 const GOOGLE_API_KEY   = 'AIzaSyDhlT6NQG0BMS_LLaLkEGoRpPwCf90wEno';
-const GOOGLE_APP_ID    = '995511225815'; // Project number from Google Cloud Console (optional, for Picker)
+const GOOGLE_APP_ID    = '995511225815';
 
-/* Google Drive state */
 let gAccessToken = null;
 let gPickerInited = false;
 let gGisInited = false;
 let gTokenClient = null;
 
-/* Initialize Google Identity Services */
 function initGis() {
   gTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
@@ -453,7 +475,6 @@ function initGis() {
   maybeEnableGDrive();
 }
 
-/* Load Picker API via gapi */
 function loadPickerApi() {
   gapi.load('picker', () => { gPickerInited = true; maybeEnableGDrive(); });
 }
@@ -465,14 +486,11 @@ function maybeEnableGDrive() {
   }
 }
 
-/* On gapi loaded */
 function onGapiLoaded() { loadPickerApi(); }
 
-/* Show the Google Picker dialog */
 function showGooglePicker() {
   const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
     .setMimeTypes('text/csv,application/vnd.ms-excel');
-  
   const pickerBuilder = new google.picker.PickerBuilder()
     .addView(view)
     .setOAuthToken(gAccessToken)
@@ -480,13 +498,10 @@ function showGooglePicker() {
     .setCallback(pickerCallback)
     .setTitle('Seleziona il file CSV da Google Drive')
     .setLocale('it');
-  
   if (GOOGLE_APP_ID) pickerBuilder.setAppId(GOOGLE_APP_ID);
-  
   pickerBuilder.build().setVisible(true);
 }
 
-/* Handle Picker selection */
 function pickerCallback(data) {
   if (data.action === google.picker.Action.PICKED) {
     const fileId = data.docs[0].id;
@@ -495,7 +510,6 @@ function pickerCallback(data) {
   }
 }
 
-/* Download file from Drive and process it */
 async function downloadAndProcessGDriveFile(fileId, fileName) {
   try {
     const resp = await fetch(
@@ -504,14 +518,10 @@ async function downloadAndProcessGDriveFile(fileId, fileName) {
     );
     if (!resp.ok) throw new Error('Download failed: ' + resp.status);
     const csvText = await resp.text();
-    
-    /* Update UI */
     const gBtn = document.getElementById('gdriveBtn');
     gBtn.classList.add('loaded');
     uploadBtn.classList.remove('loaded');
     uploadIcon.innerHTML = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>';
-    
-    /* Parse with PapaParse */
     Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
@@ -519,14 +529,13 @@ async function downloadAndProcessGDriveFile(fileId, fileName) {
     });
   } catch (err) {
     console.error('Google Drive download error:', err);
-    alert('Errore nel download del file da Google Drive. Riprova.');
+    showError('Errore nel download del file da Google Drive. Riprova.');
   }
 }
 
-/* Google Drive button click handler */
 document.getElementById('gdriveBtn').addEventListener('click', () => {
   if (!gGisInited || !gPickerInited) {
-    alert('Le API Google si stanno ancora caricando. Riprova tra un momento.');
+    showError('Le API Google si stanno ancora caricando. Riprova tra un momento.');
     return;
   }
   if (!gAccessToken) {
@@ -536,16 +545,13 @@ document.getElementById('gdriveBtn').addEventListener('click', () => {
   }
 });
 
-/* Initialize on load */
 window.addEventListener('load', () => {
-  /* gapi */
   if (typeof gapi !== 'undefined') onGapiLoaded();
   else {
     const check = setInterval(() => {
       if (typeof gapi !== 'undefined') { clearInterval(check); onGapiLoaded(); }
     }, 200);
   }
-  /* GIS */
   if (typeof google !== 'undefined' && google.accounts) initGis();
   else {
     const check2 = setInterval(() => {
@@ -555,7 +561,22 @@ window.addEventListener('load', () => {
 });
 
 /* ═══════════════════════════════════════════
-   ORIGINAL APP CODE
+   ERROR BANNER
+   ═══════════════════════════════════════════ */
+const errorBanner = document.getElementById('errorBanner');
+const errorBannerText = document.getElementById('errorBannerText');
+document.getElementById('errorBannerClose').addEventListener('click', hideError);
+
+function showError(msg) {
+  errorBannerText.textContent = msg || 'File selezionato non corretto!';
+  errorBanner.classList.add('visible');
+}
+function hideError() {
+  errorBanner.classList.remove('visible');
+}
+
+/* ═══════════════════════════════════════════
+   APP CODE
    ═══════════════════════════════════════════ */
 const COLORS=['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#a855f7','#f97316','#14b8a6','#84cc16','#f43f5e','#0ea5e9','#d946ef','#eab308'];
 const MN=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -689,7 +710,7 @@ class DRP{
 
 /* ── DOM ── */
 const uploadBtn=document.getElementById('uploadBtn'),uploadIcon=document.getElementById('uploadIcon'),fileInput=document.getElementById('fileInput');
-const results=document.getElementById('results'),subtitle=document.getElementById('subtitle');
+const results=document.getElementById('results');
 const catSel=document.getElementById('categorySelect'),subcatSel=document.getElementById('subcategorySelect'),sTitleEl=document.getElementById('searchTitle'),sNoteEl=document.getElementById('searchNote');
 const acctToggle=document.getElementById('accountsToggle'),acctPanel=document.getElementById('accountsPanel'),closeAcct=document.getElementById('closeAccounts');
 const histToggle=document.getElementById('historicalToggle'),histPanel=document.getElementById('historicalPanel'),closeHist=document.getElementById('closeHistorical');
@@ -734,9 +755,10 @@ acctToggle.addEventListener('click',()=>{const o=acctPanel.classList.toggle('ope
 closeAcct.addEventListener('click',()=>{acctPanel.classList.remove('open');acctToggle.classList.remove('active');});
 histToggle.addEventListener('click',()=>{const o=histPanel.classList.toggle('open');histToggle.classList.toggle('active',o);if(o)updHist();});
 closeHist.addEventListener('click',()=>{histPanel.classList.remove('open');histToggle.classList.remove('active');});
+
 /* ── Transactions toggle ── */
 const txToggleBtn=document.getElementById('txToggleBtn'),txList=document.getElementById('transactionsList');
-txToggleBtn.addEventListener('click',()=>{const o=txList.classList.toggle('hidden');txToggleBtn.classList.toggle('open',!o);txToggleBtn.querySelector('span')||txToggleBtn.childNodes[txToggleBtn.childNodes.length-1];txToggleBtn.lastChild.textContent=o?' Visualizza':' Nascondi';});
+txToggleBtn.addEventListener('click',()=>{const o=txList.classList.toggle('hidden');txToggleBtn.classList.toggle('open',!o);txToggleBtn.lastChild.textContent=o?' Visualizza':' Nascondi';});
 
 /* ── Info btns ── */
 document.addEventListener('click',e=>{
@@ -765,23 +787,18 @@ function handleParsed(rows, source) {
   const requiredCols = ['date', 'amount', 'account', 'category name'];
   const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
   const valid = requiredCols.every(col => headers.includes(col));
-  
+
   if (!valid || rows.length === 0) {
-    subtitle.classList.remove('loaded');
-    subtitle.classList.add('error');
-    subtitle.textContent = 'File selezionato non corretto!';
+    showError('File selezionato non valido.');
     results.classList.add('hidden');
-    /* Reset button states */
     uploadBtn.classList.remove('loaded');
     uploadIcon.innerHTML = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>';
     document.getElementById('gdriveBtn').classList.remove('loaded');
     return;
   }
-  
-  /* Valid: hide subtitle, mark source button */
-  subtitle.classList.remove('error');
-  subtitle.classList.remove('loaded');
-  subtitle.textContent = '';
+
+  /* Valid: hide any previous error, mark source button */
+  hideError();
   if (source === 'local') {
     uploadBtn.classList.add('loaded');
     document.getElementById('gdriveBtn').classList.remove('loaded');
@@ -800,7 +817,6 @@ function analyzeData(rows){
   allTx=rows.filter(r=>r['category name']&&r['category name']!=='Correzione saldo')
     .map(r=>({...r,amount:parseFloat(r.amount)||0,date:new Date(r.date)}));
   const cats=[...new Set(allTx.map(t=>t['category name']).filter(Boolean))].sort();
-  // Build subcategory map: cat -> sorted unique subcats
   subcatMap={};
   allTx.forEach(t=>{
     const cat=t['category name'],sub=(t['subcategory name']||'').trim();
@@ -885,7 +901,6 @@ function curPat(){return allRows.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);}
 function updHist(){
   const el=document.getElementById('historicalResults');
   if(!allRows.length){el.innerHTML='<div class="result-card" style="grid-column:1/-1"><div class="result-label">Carica un file CSV</div></div>';return;}
-  // Compute first and last date available in the CSV
   const allDates=allRows.map(r=>new Date(r.date)).filter(d=>!isNaN(d.getTime())).sort((a,b)=>a-b);
   const firstDate=allDates[0];
   const lastDate=allDates[allDates.length-1];
@@ -1057,4 +1072,3 @@ function hideLTip(){const t=document.querySelector('.legend-tooltip');if(t){t.st
 </script>
 </body>
 </html>
-
