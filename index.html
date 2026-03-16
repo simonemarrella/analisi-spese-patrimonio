@@ -12,35 +12,27 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth;background:#1e293b;scrollbar-gutter:stable}
 body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1e293b;min-height:100vh;padding:24px;padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom));padding-left:calc(24px + env(safe-area-inset-left));padding-right:calc(24px + env(safe-area-inset-right));color:#e2e8f0;overflow-x:hidden}
 button,input,select,textarea{font-family:inherit}
 .container{max-width:900px;margin:0 auto}
-
-/* ── HEADER: always stable, never shifts ── */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .header-left h1{font-size:1.8rem;display:flex;align-items:center;white-space:nowrap}
 .header-left h1 svg{color:#6366f1;margin-right:10px;flex-shrink:0}
-
-/* ── ERROR BANNER ── */
 .error-banner{display:none;align-items:center;gap:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:10px 16px;margin-bottom:20px;color:#fca5a5;font-size:13px;font-weight:500;animation:bannerIn .2s ease}
 .error-banner.visible{display:flex}
 @keyframes bannerIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .error-banner svg{flex-shrink:0;width:16px;height:16px;stroke:#f87171;fill:none}
 .error-banner-close{margin-left:auto;width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:#f87171;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;opacity:.7;transition:opacity .15s}
 .error-banner-close:hover{opacity:1}
-
 .info-btn{width:18px;height:18px;border-radius:50%;border:1px solid #64748b;background:transparent;color:#64748b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;transition:all .2s;position:relative}
 .info-btn:hover,.info-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.1)}
 .info-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #475569;border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;white-space:nowrap;opacity:0;visibility:hidden;transition:all .2s;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}
 .info-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#475569}
 .info-btn.active .info-tooltip{opacity:1;visibility:visible}
 .info-tooltip.wide{white-space:normal;max-width:370px;min-width:240px;text-align:center}
-
-/* Header buttons */
 .header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .upload-btn,.gdrive-btn{width:38px;height:38px;border-radius:10px;border:1px solid #475569;background:rgba(51,65,85,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:#94a3b8;flex-shrink:0}
 .upload-btn svg,.gdrive-btn svg{stroke:currentColor;fill:none;width:18px;height:18px}
@@ -49,9 +41,9 @@ button,input,select,textarea{font-family:inherit}
 .gdrive-btn.loaded{border-color:#10b981;background:rgba(16,185,129,.2);color:#10b981}
 .gdrive-btn{color:#94a3b8}
 .gdrive-btn svg{fill:currentColor;stroke:none;width:20px;height:20px}
+.gdrive-btn.loading{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .file-input{display:none}
-
-/* Patrimony section */
 .patrimony-section{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:24px;overflow:visible}
 .patrimony-main-row{display:grid;grid-template-columns:56px 1fr 56px;align-items:center;gap:16px;padding:28px 32px}
 .patrimony-main{text-align:center}
@@ -62,8 +54,6 @@ button,input,select,textarea{font-family:inherit}
 .toggle-btn svg{width:18px;height:18px;stroke:currentColor;fill:none}
 .toggle-btn:hover{border-color:#6366f1;background:rgba(99,102,241,.2);color:#e2e8f0}
 .toggle-btn.active{border-color:#6366f1;background:rgba(99,102,241,.3);color:#e2e8f0}
-
-/* Panels inside patrimony section */
 .accounts-panel,.historical-panel{display:none;padding:0 32px 24px}
 .accounts-panel.open,.historical-panel.open{display:block}
 .accounts-panel .panel-inner,.historical-panel .panel-inner{border-top:1px solid #334155;padding-top:20px}
@@ -83,8 +73,6 @@ button,input,select,textarea{font-family:inherit}
 .result-value.positive{color:#4ade80}
 .result-value.negative{color:#f87171}
 .result-secondary{font-size:11px;color:#64748b;margin-top:4px}
-
-/* Date Range Picker */
 .drp-wrapper{position:relative;display:block;width:100%}
 .drp-input{padding:6px 10px 6px 32px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:13px;cursor:pointer;height:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;min-width:0;transition:border-color .2s;user-select:none;display:flex;align-items:center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center}
 .drp-input.has-value{border-color:#6366f1}
@@ -110,8 +98,6 @@ button,input,select,textarea{font-family:inherit}
 .drp-status{font-size:11px;color:#94a3b8;font-style:italic;flex:1;min-height:14px}
 .drp-clear{padding:5px 12px;border:1px solid #475569;background:transparent;color:#94a3b8;border-radius:7px;font-size:11px;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
 .drp-clear:hover{border-color:#f87171;color:#f87171;background:rgba(239,68,68,.1)}
-
-/* ── Controls: always a single row ── */
 .controls{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
 .tabs{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -124,8 +110,6 @@ button,input,select,textarea{font-family:inherit}
 .filter-toggle-btn.active{border-color:#6366f1;color:#e2e8f0;background:rgba(99,102,241,.2)}
 .filter-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:#6366f1;color:white;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px}
 .filter-badge.visible{display:flex}
-
-/* Filter panel */
 .filter-panel{background:transparent;border:none;border-top:1px solid #334155;border-radius:0;padding:16px 0 0;margin-top:0;margin-bottom:0;display:none;width:100%}
 .filter-panel.open{display:block;animation:panelIn .15s ease}
 @keyframes panelIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
@@ -149,10 +133,7 @@ button,input,select,textarea{font-family:inherit}
 .transactions-toggle-btn.open svg{transform:rotate(180deg)}
 .clear-all-btn{padding:6px 14px;border-radius:8px;border:1px solid #475569;background:transparent;color:#94a3b8;cursor:pointer;font-size:12px;transition:all .2s;font-family:inherit}
 .clear-all-btn:hover{border-color:#f87171;color:#f87171;background:rgba(239,68,68,.1)}
-
-/* Chart card */
 .card{background:transparent;border:none;border-radius:0;padding:0;margin:0}
-/* Unified analysis section */
 .analysis-section{border:1px solid #334155;border-radius:14px;padding:20px;margin-bottom:24px;display:flex;flex-direction:column;gap:16px}
 .analysis-section .card{border:none;border-top:1px solid #334155;padding:16px 0 0;margin:0}
 .analysis-section .transactions-card{background:transparent;border:none;border-top:1px solid #334155;border-radius:0;padding:16px 0 0;margin:12px 0 0}
@@ -168,8 +149,6 @@ button,input,select,textarea{font-family:inherit}
 .chart-container.pie-chart{height:400px;display:flex;align-items:center;justify-content:center;padding:20px 0;margin-top:10px}
 .hidden{display:none}
 .no-chart-data{text-align:center;color:#64748b;padding:40px;display:flex;align-items:center;justify-content:center;height:100%}
-
-/* Table */
 .table-container{max-height:500px;overflow-y:auto;padding-right:16px;margin-right:-8px;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.5) transparent}
 .table-container::-webkit-scrollbar{width:8px}
 .table-container::-webkit-scrollbar-track{background:transparent;border-radius:10px;margin:4px 0}
@@ -192,16 +171,12 @@ button,input,select,textarea{font-family:inherit}
 .category-cell{display:flex;align-items:center}
 .category-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .data-table tfoot td{padding:12px;font-weight:700;border-top:2px solid #475569;border-bottom:none;color:#e2e8f0;background:rgba(15,23,42,.5)}
-
-/* Flow */
 .flow-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .flow-card{background:rgba(51,65,85,.3);border-radius:8px;padding:12px 16px;text-align:center}
 .flow-card .label{font-size:12px;color:#94a3b8;margin-bottom:4px}
 .flow-card .value{font-size:1.3rem;font-weight:600}
 .flow-card .value.green{color:#4ade80}
 .flow-card .value.red{color:#f87171}
-
-/* Transactions */
 .transactions-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:24px}
 .transactions-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .transactions-header h2{font-size:1rem;font-weight:600}
@@ -223,12 +198,8 @@ button,input,select,textarea{font-family:inherit}
 .transaction-amount.income{color:#4ade80}
 .transaction-amount.expense{color:#f87171}
 .no-transactions{text-align:center;color:#64748b;padding:40px}
-
-/* Tooltip */
 .legend-tooltip,.bar-chart-tooltip{position:absolute;background:#1e293b;border:1px solid #475569;border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none;transform:translateX(-50%)}
 .bar-chart-tooltip{white-space:normal;text-align:center;max-width:200px}
-
-/* Responsive */
 @media(max-width:768px){
 body{padding:16px;padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(16px + env(safe-area-inset-bottom))}
 .header-left h1{font-size:1.4rem}
@@ -245,12 +216,10 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
 .accounts-panel,.historical-panel{padding:0 16px 20px}
 .patrimony-value{font-size:2rem}
 .patrimony-toggles{flex-direction:row;justify-content:center}
-/* Controls: stay on one row, tabs scroll, filter btn fixed */
 .controls{gap:6px}
 .tabs{gap:4px}
 .tab{padding:8px 11px;font-size:12px}
 .filter-toggle-btn{padding:7px 11px;font-size:12px;gap:5px}
-/* Filter panel full width inputs */
 .filter-panel{padding:12px 0 0}
 .filter-panel-grid{grid-template-columns:1fr;gap:10px}
 .fp-full{grid-column:auto}
@@ -286,7 +255,7 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
       <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analisi Spese e Patrimonio</h1>
     </div>
     <div class="header-actions">
-      <div class="gdrive-btn" id="gdriveBtn" title="Apri da Google Drive">
+      <div class="gdrive-btn" id="gdriveBtn" title="Carica da Google Drive">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.71 3.5L1.15 15l3.43 5.95 6.56-11.5L7.71 3.5zm1.14 0l6.56 11.5H22l-6.56-11.5H8.85zM15.84 16H2.72L6.15 22h13.13l3.42-5.95-.43-.05H15.84z"/></svg>
       </div>
       <div class="upload-btn" id="uploadBtn" title="Carica CSV locale">
@@ -295,18 +264,13 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
       </div>
     </div>
   </div>
-
-  <!-- ERROR BANNER (shown below header, outside results) -->
   <div class="error-banner" id="errorBanner">
     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span id="errorBannerText">File selezionato non corretto!</span>
     <button class="error-banner-close" id="errorBannerClose" title="Chiudi">&#x2715;</button>
   </div>
-
   <div id="results" class="hidden">
-    <!-- PATRIMONY SECTION -->
     <div class="patrimony-section" id="patrimonySection">
-      <!-- main row -->
       <div class="patrimony-main-row">
         <div></div>
         <div class="patrimony-main">
@@ -322,16 +286,12 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
           </button>
         </div>
       </div>
-
-      <!-- ACCOUNTS (inside section) -->
       <div class="accounts-panel" id="accountsPanel">
         <div class="panel-inner">
           <div class="panel-header"><h2>Saldo per Conto</h2><button class="close-btn" id="closeAccounts">&#x2715;</button></div>
           <div class="table-container" id="accountsTableContainer"></div>
         </div>
       </div>
-
-      <!-- HISTORICAL (inside section) -->
       <div class="historical-panel" id="historicalPanel">
         <div class="panel-inner">
           <div class="panel-header"><h2>Storico Patrimonio</h2><button class="close-btn" id="closeHistorical">&#x2715;</button></div>
@@ -349,12 +309,8 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
           <div class="historical-results" id="historicalResults"></div>
         </div>
       </div>
-    </div><!-- end .patrimony-section -->
-
-    <!-- ANALYSIS SECTION: controls + filters + chart + transactions -->
+    </div>
     <div class="analysis-section">
-
-    <!-- CONTROLS -->
     <div class="controls">
       <div class="tabs">
         <button class="tab active" data-view="categorie">Categorie</button>
@@ -367,8 +323,6 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
         <span class="filter-badge" id="filterBadge">0</span>
       </button>
     </div>
-
-    <!-- FILTER PANEL -->
     <div class="filter-panel" id="filterPanel">
       <div class="filter-panel-grid">
         <div class="fp-row fp-full">
@@ -398,8 +352,6 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
         <button class="clear-all-btn" id="clearAllFilters">&#x2715; Cancella filtri</button>
       </div>
     </div>
-
-    <!-- CHART CARD -->
     <div class="card">
       <div class="card-header">
         <h2 class="card-title" id="chartTitle">Spese per Categoria</h2>
@@ -427,8 +379,6 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
         </table>
       </div>
     </div>
-
-    <!-- TRANSACTIONS -->
     <div class="transactions-card">
       <div class="transactions-header">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -444,120 +394,87 @@ body{padding:12px;padding-top:calc(12px + env(safe-area-inset-top));padding-bott
         <div class="no-transactions">Nessuna transazione</div>
       </div>
     </div>
-
-    </div><!-- end .analysis-section -->
+    </div>
   </div>
 </div>
 <script>
 /* ═══════════════════════════════════════════
-   GOOGLE DRIVE CONFIGURATION
+   GOOGLE DRIVE – AUTO-LOAD cashew/main.csv
    ═══════════════════════════════════════════ */
 const GOOGLE_CLIENT_ID = '995511225815-m7u2d3dq5mlihlj2aq2lmtb3do1mq4ra.apps.googleusercontent.com';
-const GOOGLE_API_KEY   = 'AIzaSyDhlT6NQG0BMS_LLaLkEGoRpPwCf90wEno';
-const GOOGLE_APP_ID    = '995511225815';
 
 let gAccessToken = null;
-let gPickerInited = false;
-let gGisInited = false;
 let gTokenClient = null;
 
 function initGis() {
   gTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/drive.readonly',
-    callback: (response) => {
-      if (response.error) { console.error('GIS error', response); return; }
-      gAccessToken = response.access_token;
-      showGooglePicker();
+    callback: (resp) => {
+      if (resp.error) { console.error('GIS error', resp); return; }
+      gAccessToken = resp.access_token;
+      autoLoadMainCsv();
     },
   });
-  gGisInited = true;
-  maybeEnableGDrive();
 }
 
-function loadPickerApi() {
-  gapi.load('picker', () => { gPickerInited = true; maybeEnableGDrive(); });
-}
-
-function maybeEnableGDrive() {
-  if (gPickerInited && gGisInited) {
-    document.getElementById('gdriveBtn').style.opacity = '1';
-    document.getElementById('gdriveBtn').style.pointerEvents = 'auto';
-  }
-}
-
-function onGapiLoaded() { loadPickerApi(); }
-
-function showGooglePicker() {
-  const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes('text/csv,application/vnd.ms-excel');
-  const pickerBuilder = new google.picker.PickerBuilder()
-    .addView(view)
-    .setOAuthToken(gAccessToken)
-    .setDeveloperKey(GOOGLE_API_KEY)
-    .setCallback(pickerCallback)
-    .setTitle('Seleziona il file CSV da Google Drive')
-    .setLocale('it');
-  if (GOOGLE_APP_ID) pickerBuilder.setAppId(GOOGLE_APP_ID);
-  pickerBuilder.build().setVisible(true);
-}
-
-function pickerCallback(data) {
-  if (data.action === google.picker.Action.PICKED) {
-    const fileId = data.docs[0].id;
-    const fileName = data.docs[0].name;
-    downloadAndProcessGDriveFile(fileId, fileName);
-  }
-}
-
-async function downloadAndProcessGDriveFile(fileId, fileName) {
+async function autoLoadMainCsv() {
+  const gBtn = document.getElementById('gdriveBtn');
+  gBtn.classList.add('loading');
   try {
-    const resp = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      { headers: { 'Authorization': `Bearer ${gAccessToken}` } }
-    );
-    if (!resp.ok) throw new Error('Download failed: ' + resp.status);
-    const csvText = await resp.text();
-    const gBtn = document.getElementById('gdriveBtn');
+    // 1. Trova cartella "cashew"
+    const foldResp = await fetch(
+      'https://www.googleapis.com/drive/v3/files?q=' +
+      encodeURIComponent("name='Cashew' and mimeType='application/vnd.google-apps.folder' and trashed=false") +
+      '&fields=files(id)', { headers: { Authorization: 'Bearer ' + gAccessToken } });
+    const foldData = await foldResp.json();
+    if (!foldData.files || !foldData.files.length) throw new Error('Cartella "Cashew" non trovata su Drive');
+    const folderId = foldData.files[0].id;
+
+    // 2. Trova "main.csv" nella cartella
+    const fileResp = await fetch(
+      'https://www.googleapis.com/drive/v3/files?q=' +
+      encodeURIComponent("name='main.csv' and '" + folderId + "' in parents and trashed=false") +
+      '&fields=files(id)', { headers: { Authorization: 'Bearer ' + gAccessToken } });
+    const fileData = await fileResp.json();
+    if (!fileData.files || !fileData.files.length) throw new Error('File "main.csv" non trovato nella cartella Cashew');
+
+    // 3. Scarica contenuto
+    const dlResp = await fetch(
+      'https://www.googleapis.com/drive/v3/files/' + fileData.files[0].id + '?alt=media',
+      { headers: { Authorization: 'Bearer ' + gAccessToken } });
+    if (!dlResp.ok) throw new Error('Download fallito: ' + dlResp.status);
+    const csvText = await dlResp.text();
+
+    gBtn.classList.remove('loading');
     gBtn.classList.add('loaded');
     uploadBtn.classList.remove('loaded');
     uploadIcon.innerHTML = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>';
-    Papa.parse(csvText, {
-      header: true,
-      skipEmptyLines: true,
-      complete: r => handleParsed(r.data, 'gdrive')
-    });
+
+    Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: r => handleParsed(r.data, 'gdrive') });
   } catch (err) {
-    console.error('Google Drive download error:', err);
-    showError('Errore nel download del file da Google Drive. Riprova.');
+    console.error('Google Drive error:', err);
+    gBtn.classList.remove('loading');
+    showError(err.message || 'Errore nel caricamento da Google Drive');
   }
 }
 
 document.getElementById('gdriveBtn').addEventListener('click', () => {
-  if (!gGisInited || !gPickerInited) {
+  if (!gTokenClient) {
     showError('Le API Google si stanno ancora caricando. Riprova tra un momento.');
     return;
   }
   if (!gAccessToken) {
     gTokenClient.requestAccessToken({ prompt: 'consent' });
   } else {
-    showGooglePicker();
+    autoLoadMainCsv();
   }
 });
 
 window.addEventListener('load', () => {
-  if (typeof gapi !== 'undefined') onGapiLoaded();
-  else {
-    const check = setInterval(() => {
-      if (typeof gapi !== 'undefined') { clearInterval(check); onGapiLoaded(); }
-    }, 200);
-  }
-  if (typeof google !== 'undefined' && google.accounts) initGis();
-  else {
-    const check2 = setInterval(() => {
-      if (typeof google !== 'undefined' && google.accounts) { clearInterval(check2); initGis(); }
-    }, 200);
-  }
+  const check = setInterval(() => {
+    if (typeof google !== 'undefined' && google.accounts) { clearInterval(check); initGis(); }
+  }, 200);
 });
 
 /* ═══════════════════════════════════════════
@@ -645,20 +562,10 @@ class DRP{
       if(rS!==null&&t===rS)c+=' selected';
       if(rE!==null&&t===rE)c+=' selected';
       if(rS!==null&&rE!==null&&t>rS&&t<rE)c+=' in-range';
-      g+=`<span class="${c}" data-t="${t}">${d}</span>`;
+      g+='<span class="'+c+'" data-t="'+t+'">'+d+'</span>';
     }
     const st=this.sel?'Seleziona la data di fine\u2026':'';
-    this.dd.innerHTML=`
-      <div class="drp-header">
-        <button class="drp-nav" data-dm="-12">&laquo;</button>
-        <button class="drp-nav" data-dm="-1">&lsaquo;</button>
-        <span class="drp-month-label">${MN[this.vm]} ${this.vy}</span>
-        <button class="drp-nav" data-dm="1">&rsaquo;</button>
-        <button class="drp-nav" data-dm="12">&raquo;</button>
-      </div>
-      <div class="drp-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Gi</span><span>Ve</span><span>Sa</span><span>Do</span></div>
-      <div class="drp-grid">${g}</div>
-      <div class="drp-status-bar"><span class="drp-status">${st}</span><button class="drp-clear">Cancella</button></div>`;
+    this.dd.innerHTML='<div class="drp-header"><button class="drp-nav" data-dm="-12">&laquo;</button><button class="drp-nav" data-dm="-1">&lsaquo;</button><span class="drp-month-label">'+MN[this.vm]+' '+this.vy+'</span><button class="drp-nav" data-dm="1">&rsaquo;</button><button class="drp-nav" data-dm="12">&raquo;</button></div><div class="drp-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Gi</span><span>Ve</span><span>Sa</span><span>Do</span></div><div class="drp-grid">'+g+'</div><div class="drp-status-bar"><span class="drp-status">'+st+'</span><button class="drp-clear">Cancella</button></div>';
     this.dd.querySelectorAll('.drp-nav').forEach(b=>{
       b.addEventListener('mousedown',e=>{e.stopPropagation();e.preventDefault();
         this.vm+=parseInt(b.dataset.dm);
@@ -700,8 +607,8 @@ class DRP{
   clear(){this.sd=null;this.ed=null;this.sel=false;this.hd=null;this.upd();this.onChange(null,null);this.close();}
   upd(){
     const f=d=>d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    if(this.sd&&this.ed){this.trigger.textContent=`${f(this.sd)} \u2013 ${f(this.ed)}`;this.trigger.classList.add('has-value');}
-    else if(this.sd){this.trigger.textContent=`Dal ${f(this.sd)}`;this.trigger.classList.add('has-value');}
+    if(this.sd&&this.ed){this.trigger.textContent=f(this.sd)+' \u2013 '+f(this.ed);this.trigger.classList.add('has-value');}
+    else if(this.sd){this.trigger.textContent='Dal '+f(this.sd);this.trigger.classList.add('has-value');}
     else{this.trigger.textContent=this.ph;this.trigger.classList.remove('has-value');}
   }
   get(){return{start:this.sd,end:this.ed};}
@@ -742,7 +649,7 @@ clearHistBtn.addEventListener('click',()=>{if(histDRP)histDRP.clear();});
 function updSubcatSelect(){
   const subs=curCat==='all'?[]:(subcatMap[curCat]||[]);
   subcatSel.innerHTML='<option value="all">Tutte le sottocategorie</option>';
-  subs.forEach(s=>{subcatSel.innerHTML+=`<option value="${esc(s)}">${esc(s)}</option>`;});
+  subs.forEach(s=>{subcatSel.innerHTML+='<option value="'+esc(s)+'">'+esc(s)+'</option>';});
   subcatSel.value='all';
   subcatSel.disabled=subs.length===0;
 }
@@ -787,7 +694,6 @@ function handleParsed(rows, source) {
   const requiredCols = ['date', 'amount', 'account', 'category name'];
   const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
   const valid = requiredCols.every(col => headers.includes(col));
-
   if (!valid || rows.length === 0) {
     showError('File selezionato non valido.');
     results.classList.add('hidden');
@@ -796,8 +702,6 @@ function handleParsed(rows, source) {
     document.getElementById('gdriveBtn').classList.remove('loaded');
     return;
   }
-
-  /* Valid: hide any previous error, mark source button */
   hideError();
   if (source === 'local') {
     uploadBtn.classList.add('loaded');
@@ -813,7 +717,7 @@ function analyzeData(rows){
   acctBal={};
   rows.forEach(r=>{if(r.account)acctBal[r.account]=(acctBal[r.account]||0)+(parseFloat(r.amount)||0);});
   const tot=Object.values(acctBal).reduce((s,v)=>s+v,0);
-  document.getElementById('totalPatrimony').textContent='€ '+f2(tot);
+  document.getElementById('totalPatrimony').textContent='\u20AC '+f2(tot);
   allTx=rows.filter(r=>r['category name']&&r['category name']!=='Correzione saldo')
     .map(r=>({...r,amount:parseFloat(r.amount)||0,date:new Date(r.date)}));
   const cats=[...new Set(allTx.map(t=>t['category name']).filter(Boolean))].sort();
@@ -824,7 +728,7 @@ function analyzeData(rows){
   });
   Object.keys(subcatMap).forEach(k=>{subcatMap[k]=[...subcatMap[k]].sort();});
   catSel.innerHTML='<option value="all">Tutte le categorie</option>';
-  cats.forEach(c=>{catSel.innerHTML+=`<option value="${esc(c)}">${esc(c)}</option>`;});
+  cats.forEach(c=>{catSel.innerHTML+='<option value="'+esc(c)+'">'+esc(c)+'</option>';});
   curSubcat='all';updSubcatSelect();
   results.classList.remove('hidden');
   if(!mainDRP){
@@ -858,23 +762,7 @@ function renderAcctChart(){
   let sc='value',sd='desc';
   function rb(){
     const colorMap={};data.forEach((d,i)=>colorMap[d.name]=COLORS[i%COLORS.length]);
-    el.innerHTML=`<table class="data-table">
-      <thead><tr>
-        <th data-col="name" style="cursor:pointer">Conto</th>
-        <th data-col="value" style="cursor:pointer;text-align:right">Saldo</th>
-        <th data-col="pct" style="cursor:pointer;text-align:right">%</th>
-      </tr></thead>
-      <tbody>${data.map(d=>`<tr>
-        <td><div class="category-cell"><span class="table-color-dot" style="background:${colorMap[d.name]}"></span><span class="category-name">${esc(d.name)}</span></div></td>
-        <td style="text-align:right;color:${d.value>=0?'#4ade80':'#f87171'};font-weight:600">€ ${d.value.toLocaleString('it-IT',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#94a3b8;font-size:12px">${total!==0?Math.abs(d.value/total*100).toFixed(1):0}%</td>
-      </tr>`).join('')}</tbody>
-      <tfoot><tr>
-        <td>Totale (${data.length})</td>
-        <td style="text-align:right;color:${total>=0?'#4ade80':'#f87171'}">€ ${total.toLocaleString('it-IT',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right">100%</td>
-      </tr></tfoot>
-    </table>`;
+    el.innerHTML='<table class="data-table"><thead><tr><th data-col="name" style="cursor:pointer">Conto</th><th data-col="value" style="cursor:pointer;text-align:right">Saldo</th><th data-col="pct" style="cursor:pointer;text-align:right">%</th></tr></thead><tbody>'+data.map(d=>'<tr><td><div class="category-cell"><span class="table-color-dot" style="background:'+colorMap[d.name]+'"></span><span class="category-name">'+esc(d.name)+'</span></div></td><td style="text-align:right;color:'+(d.value>=0?'#4ade80':'#f87171')+';font-weight:600">\u20AC '+d.value.toLocaleString('it-IT',{minimumFractionDigits:2})+'</td><td style="text-align:right;color:#94a3b8;font-size:12px">'+(total!==0?Math.abs(d.value/total*100).toFixed(1):0)+'%</td></tr>').join('')+'</tbody><tfoot><tr><td>Totale ('+data.length+')</td><td style="text-align:right;color:'+(total>=0?'#4ade80':'#f87171')+'">\u20AC '+total.toLocaleString('it-IT',{minimumFractionDigits:2})+'</td><td style="text-align:right">100%</td></tr></tfoot></table>';
     el.querySelectorAll('th').forEach(th=>{
       th.classList.remove('sorted-asc','sorted-desc');
       if(th.dataset.col===sc)th.classList.add(sd==='asc'?'sorted-asc':'sorted-desc');
@@ -913,20 +801,12 @@ function updHist(){
   else{const t=new Date(lastDate);t.setHours(23,59,59,999);eP=calcPatAt(t);eL=lastDate.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});}
   const v=eP-sP;
   let pHtml='',pCls='';
-  if(sP!==0){const p=(v/Math.abs(sP))*100;pCls=p>=0?'positive':'negative';pHtml=`${p>=0?'+':'\u2212'} ${Math.abs(p).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} %`;}
+  if(sP!==0){const p=(v/Math.abs(sP))*100;pCls=p>=0?'positive':'negative';pHtml=(p>=0?'+':'\u2212')+' '+Math.abs(p).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})+' %';}
   else pHtml='N/A';
   const vSign=v>=0?'+':'\u2212';
-  const vHtml=`${vSign} \u20AC ${Math.abs(v).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const vHtml=vSign+' \u20AC '+Math.abs(v).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
   const eCls=eP>sP?'positive':eP<sP?'negative':'start-value';
-  el.innerHTML=`
-    <div class="results-group">
-      <div class="result-card"><div class="result-label">Patrimonio Inizio Periodo</div><div class="result-value start-value">\u20AC ${f2(sP)}</div><div class="result-secondary">${sL}</div></div>
-      <div class="result-card"><div class="result-label">Patrimonio Fine Periodo</div><div class="result-value ${eCls}">\u20AC ${f2(eP)}</div><div class="result-secondary">${eL}</div></div>
-    </div>
-    <div class="results-group">
-      <div class="result-card"><div class="result-label">Variazione Totale <button class="info-btn" style="margin-left:3px;">i<span class="info-tooltip wide">Transazioni considerate:<br>Entrate, Uscite e Correzioni saldo</span></button></div><div class="result-value ${v>=0?'positive':'negative'}">${vHtml}</div></div>
-      <div class="result-card"><div class="result-label">Variazione %</div><div class="result-value ${pCls}">${pHtml}</div></div>
-    </div>`;
+  el.innerHTML='<div class="results-group"><div class="result-card"><div class="result-label">Patrimonio Inizio Periodo</div><div class="result-value start-value">\u20AC '+f2(sP)+'</div><div class="result-secondary">'+sL+'</div></div><div class="result-card"><div class="result-label">Patrimonio Fine Periodo</div><div class="result-value '+eCls+'">\u20AC '+f2(eP)+'</div><div class="result-secondary">'+eL+'</div></div></div><div class="results-group"><div class="result-card"><div class="result-label">Variazione Totale <button class="info-btn" style="margin-left:3px;">i<span class="info-tooltip wide">Transazioni considerate:<br>Entrate, Uscite e Correzioni saldo</span></button></div><div class="result-value '+(v>=0?'positive':'negative')+'">'+vHtml+'</div></div><div class="result-card"><div class="result-label">Variazione %</div><div class="result-value '+pCls+'">'+pHtml+'</div></div></div>';
 }
 
 /* ── Display ── */
@@ -947,19 +827,19 @@ function updFlowSummary(txs){
 }
 
 /* ── Transactions list ── */
-const NOTE_SVG=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+const NOTE_SVG='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
 function updTxList(txs){
   const lEl=document.getElementById('transactionsList'),cEl=document.getElementById('transactionsCount');
   const sorted=[...txs].sort((a,b)=>b.date-a.date);
-  cEl.textContent=`${sorted.length} transazion${sorted.length===1?'e':'i'}`;
+  cEl.textContent=sorted.length+' transazion'+(sorted.length===1?'e':'i');
   if(!sorted.length){lEl.innerHTML='<div class="no-transactions">Nessuna transazione nel periodo selezionato</div>';return;}
   lEl.innerHTML=sorted.map(t=>{
     const isInc=t.amount>0;
     const ds=t.date.toLocaleDateString('it-IT',{day:'2-digit',month:'short'});
     const cat=t['category name']||'';
-    const sub=t['subcategory name']?` \u2192 ${t['subcategory name']}`:'';
-    const note=t.note?`<span class="transaction-note" title="${esc(t.note)}">${NOTE_SVG} ${esc(t.note)}</span>`:'';
-    return`<div class="transaction-item"><div class="transaction-left"><div class="transaction-title">${esc(t.title||'Senza titolo')}</div><div class="transaction-meta"><span>${ds}</span><span class="transaction-category">${esc(cat)}${esc(sub)}</span><span class="transaction-account">${esc(t.account||'')}</span>${note}</div></div><div class="transaction-amount ${isInc?'income':'expense'}">${isInc?'+ ':'\u2212 '}\u20AC ${Math.abs(t.amount).toLocaleString('it-IT',{minimumFractionDigits:2})}</div></div>`;
+    const sub=t['subcategory name']?' \u2192 '+t['subcategory name']:'';
+    const note=t.note?'<span class="transaction-note" title="'+esc(t.note)+'">'+NOTE_SVG+' '+esc(t.note)+'</span>':'';
+    return '<div class="transaction-item"><div class="transaction-left"><div class="transaction-title">'+esc(t.title||'Senza titolo')+'</div><div class="transaction-meta"><span>'+ds+'</span><span class="transaction-category">'+esc(cat)+esc(sub)+'</span><span class="transaction-account">'+esc(t.account||'')+'</span>'+note+'</div></div><div class="transaction-amount '+(isInc?'income':'expense')+'">'+(isInc?'+ ':'\u2212 ')+'\u20AC '+Math.abs(t.amount).toLocaleString('it-IT',{minimumFractionDigits:2})+'</div></div>';
   }).join('');
 }
 
@@ -968,7 +848,7 @@ function catKey(t,isSub){
   const cat=t['category name']||'Altro';
   if(!isSub)return cat;
   const sub=(t['subcategory name']&&t['subcategory name'].trim())?t['subcategory name'].trim():cat;
-  return`${cat} \u2192 ${sub}`;
+  return cat+' \u2192 '+sub;
 }
 
 /* ── Category chart ── */
@@ -980,7 +860,7 @@ function updCatChart(txs){
   const data=Object.entries(tots).map(([n,v])=>({name:n,value:Math.round(v*100)/100,pct:grand>0?v/grand*100:0})).sort((a,b)=>b.value-a.value);
   if(!data.length){renderEmpty('Nessuna spesa nel periodo selezionato');return;}
   if(curChartType==='pie')renderPie(data.slice(0,10),Math.max(0,data.length-10),isSub);
-  else renderBar(data.slice(0,15),data.slice(0,15).map((_,i)=>COLORS[i%COLORS.length]),Math.max(0,data.length-15),isSub);
+  else renderBar(data.slice(0,15),data.slice(0,15).map(function(_,i){return COLORS[i%COLORS.length];}),Math.max(0,data.length-15),isSub);
 }
 
 /* ── Category table ── */
@@ -991,14 +871,14 @@ function updCatTable(txs){
   const grand=Object.values(tots).reduce((s,v)=>s+v,0);
   let td=Object.entries(tots).map(([n,v])=>({name:n,value:Math.round(v*100)/100,pct:grand>0?v/grand*100:0})).sort((a,b)=>b.value-a.value);
   const tbl=document.getElementById('dataTable'),thead=tbl.querySelector('thead tr');
-  thead.innerHTML=`<th data-col="name">${isSub?'Sottocategoria':'Categoria'}</th><th data-col="value">Importo</th><th data-col="pct">%</th>`;
+  thead.innerHTML='<th data-col="name">'+(isSub?'Sottocategoria':'Categoria')+'</th><th data-col="value">Importo</th><th data-col="pct">%</th>';
   let sc='value',sd2='desc';
   function rb(){
     const tb=tbl.querySelector('tbody');
     if(!td.length){tb.innerHTML='<tr><td colspan="3" style="text-align:center;color:#64748b;padding:40px">Nessuna spesa</td></tr>';const ft=tbl.querySelector('tfoot');if(ft)ft.remove();return;}
-    tb.innerHTML=td.map((item,i)=>`<tr><td><div class="category-cell"><span class="table-color-dot" style="background:${COLORS[i%COLORS.length]}"></span><span class="category-name">${esc(item.name)}</span></div></td><td>\u20AC ${item.value.toLocaleString('it-IT',{minimumFractionDigits:2})}</td><td>${item.pct.toFixed(1)}%</td></tr>`).join('');
+    tb.innerHTML=td.map((item,i)=>'<tr><td><div class="category-cell"><span class="table-color-dot" style="background:'+COLORS[i%COLORS.length]+'"></span><span class="category-name">'+esc(item.name)+'</span></div></td><td>\u20AC '+item.value.toLocaleString('it-IT',{minimumFractionDigits:2})+'</td><td>'+item.pct.toFixed(1)+'%</td></tr>').join('');
     let tf=tbl.querySelector('tfoot');if(!tf){tf=document.createElement('tfoot');tbl.appendChild(tf);}
-    tf.innerHTML=`<tr><td>Totale (${td.length})</td><td>\u20AC ${grand.toLocaleString('it-IT',{minimumFractionDigits:2})}</td><td>100%</td></tr>`;
+    tf.innerHTML='<tr><td>Totale ('+td.length+')</td><td>\u20AC '+grand.toLocaleString('it-IT',{minimumFractionDigits:2})+'</td><td>100%</td></tr>';
     thead.querySelectorAll('th').forEach(th=>{th.classList.remove('sorted-asc','sorted-desc');if(th.dataset.col===sc)th.classList.add(sd2==='asc'?'sorted-asc':'sorted-desc');});
   }
   thead.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;sd2=sc===col?(sd2==='asc'?'desc':'asc'):(col==='name'?'asc':'desc');sc=col;td.sort((a,b)=>{const c=col==='name'?a.name.localeCompare(b.name,'it'):a[col]-b[col];return sd2==='asc'?c:-c;});rb();};});
@@ -1018,10 +898,10 @@ function updFlowChart(txs){
     cc.classList.remove('flow-multi');cc.style.height='150px';
     renderBar([{name:'Entrate',value:Math.round(inc*100)/100},{name:'Uscite',value:Math.round(exp*100)/100}],['#4ade80','#f87171'],0,false);
   } else {
-    const mo={};txs.forEach(t=>{const k=`${t.date.getFullYear()}-${String(t.date.getMonth()+1).padStart(2,'0')}`;if(!mo[k])mo[k]={inc:0,exp:0,y:t.date.getFullYear(),m:t.date.getMonth()+1};if(t.amount>0)mo[k].inc+=t.amount;else mo[k].exp+=Math.abs(t.amount);});
+    const mo={};txs.forEach(t=>{const k=t.date.getFullYear()+'-'+String(t.date.getMonth()+1).padStart(2,'0');if(!mo[k])mo[k]={inc:0,exp:0,y:t.date.getFullYear(),m:t.date.getMonth()+1};if(t.amount>0)mo[k].inc+=t.amount;else mo[k].exp+=Math.abs(t.amount);});
     const keys=Object.keys(mo).sort().reverse();if(!keys.length){renderEmpty('Nessun dato');return;}
     cc.classList.add('flow-multi');cc.style.height=Math.max(200,keys.length*60)+'px';
-    renderGroupedBar(keys.map(k=>`${MN[mo[k].m-1]} ${mo[k].y}`),keys.map(k=>Math.round(mo[k].inc*100)/100),keys.map(k=>Math.round(mo[k].exp*100)/100));
+    renderGroupedBar(keys.map(k=>MN[mo[k].m-1]+' '+mo[k].y),keys.map(k=>Math.round(mo[k].inc*100)/100),keys.map(k=>Math.round(mo[k].exp*100)/100));
   }
 }
 
@@ -1038,12 +918,12 @@ function renderBar(data,colors,extra,isSub){
   const pL=n=>{let d=isSub&&n.includes(' \u2192 ')?n.split(' \u2192 ')[1]:n;return d.length>maxC?d.substring(0,maxC-1)+'\u2026':d;};
   const labs=[...data.map(d=>pL(d.name))],vals=[...data.map(d=>d.value)],bC=[...colors];
   if(hasE){labs.push('\u2022\u2022\u2022');vals.push(null);bC.push('transparent');}
-  chartInst=new Chart(ctx,{type:'bar',data:{labels:labs,datasets:[{data:vals,backgroundColor:bC,borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{filter:i=>i.dataIndex<data.length,callbacks:{title:it=>it.length&&it[0].dataIndex<data.length?data[it[0].dataIndex].name:'',label:c=>{if(c.dataIndex>=data.length)return'';const it=data[c.dataIndex];let l='\u20AC '+c.raw.toLocaleString('it-IT');if(it.pct!==undefined)l+=` (${it.pct.toFixed(1)}%)`;return l;}}}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>'\u20AC'+v.toLocaleString('it-IT')},grid:{color:'#334155'},border:{display:false}},y:{ticks:{color:ctx2=>hasE&&ctx2.index===labs.length-1?'#64748b':'#e2e8f0',font:{size:isMob?10:12},autoSkip:false},grid:{display:false},border:{display:false}}}}});
+  chartInst=new Chart(ctx,{type:'bar',data:{labels:labs,datasets:[{data:vals,backgroundColor:bC,borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{filter:i=>i.dataIndex<data.length,callbacks:{title:it=>it.length&&it[0].dataIndex<data.length?data[it[0].dataIndex].name:'',label:c=>{if(c.dataIndex>=data.length)return'';const it=data[c.dataIndex];let l='\u20AC '+c.raw.toLocaleString('it-IT');if(it.pct!==undefined)l+=' ('+it.pct.toFixed(1)+'%)';return l;}}}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>'\u20AC'+v.toLocaleString('it-IT')},grid:{color:'#334155'},border:{display:false}},y:{ticks:{color:ctx2=>hasE&&ctx2.index===labs.length-1?'#64748b':'#e2e8f0',font:{size:isMob?10:12},autoSkip:false},grid:{display:false},border:{display:false}}}}});
   let lH=-1;
-  barListeners.click=e=>{if(!chartInst?.scales?.y)return;const ya=chartInst.scales.y,ca=chartInst.chartArea,rect=cv.getBoundingClientRect(),y=e.clientY-rect.top,x=e.clientX-rect.left,li=ya.getValueForPixel(y),ri=Math.round(li),th='ontouchstart' in window?.8:.5;if(Math.abs(li-ri)<th){if(hasE&&ri===labs.length-1){e.stopPropagation();toggleBTip(e,`Altre ${extra} ${catT} non mostrate`,chartInst);return;}if(x<ca.left&&ri>=0&&ri<data.length){const it=data[ri];let txt=it.name+'\n\u20AC '+it.value.toLocaleString('it-IT');if(it.pct!==undefined)txt+=` (${it.pct.toFixed(1)}%)`;e.stopPropagation();toggleBTip(e,txt,chartInst);}}};
+  barListeners.click=e=>{if(!chartInst||!chartInst.scales||!chartInst.scales.y)return;const ya=chartInst.scales.y,ca=chartInst.chartArea,rect=cv.getBoundingClientRect(),y=e.clientY-rect.top,x=e.clientX-rect.left,li=ya.getValueForPixel(y),ri=Math.round(li),th='ontouchstart' in window?.8:.5;if(Math.abs(li-ri)<th){if(hasE&&ri===labs.length-1){e.stopPropagation();toggleBTip(e,'Altre '+extra+' '+catT+' non mostrate',chartInst);return;}if(x<ca.left&&ri>=0&&ri<data.length){const it=data[ri];var txt=it.name+'\n\u20AC '+it.value.toLocaleString('it-IT');if(it.pct!==undefined)txt+=' ('+it.pct.toFixed(1)+'%)';e.stopPropagation();toggleBTip(e,txt,chartInst);}}};
   cv.addEventListener('click',barListeners.click);
   if(hasE&&window.matchMedia('(hover:hover)').matches){
-    barListeners.mousemove=e=>{if(!chartInst?.scales?.y)return;const li=chartInst.scales.y.getValueForPixel(e.clientY-cv.getBoundingClientRect().top),ri=Math.round(li),on=ri===labs.length-1&&Math.abs(li-ri)<.5;if(on&&lH!==ri){lH=ri;showBTip(e,`Altre ${extra} ${catT} non mostrate`,chartInst);}else if(!on&&lH!==-1){lH=-1;hideBTip();}};
+    barListeners.mousemove=e=>{if(!chartInst||!chartInst.scales||!chartInst.scales.y)return;const li=chartInst.scales.y.getValueForPixel(e.clientY-cv.getBoundingClientRect().top),ri=Math.round(li),on=ri===labs.length-1&&Math.abs(li-ri)<.5;if(on&&lH!==ri){lH=ri;showBTip(e,'Altre '+extra+' '+catT+' non mostrate',chartInst);}else if(!on&&lH!==-1){lH=-1;hideBTip();}};
     barListeners.mouseleave=()=>{lH=-1;hideBTip();};
     cv.addEventListener('mousemove',barListeners.mousemove);cv.addEventListener('mouseleave',barListeners.mouseleave);
   }
@@ -1052,18 +932,18 @@ function renderBar(data,colors,extra,isSub){
 function renderPie(data,extra,isSub){
   clearEmpty();if(chartInst)chartInst.destroy();rmBL();cleanX();
   const ctx=document.getElementById('chart').getContext('2d'),lp=getLegPos(),catT=isSub?'sottocategorie':'categorie';
-  chartInst=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d.name),datasets:[{data:data.map(d=>d.value),backgroundColor:data.map((_,i)=>COLORS[i%COLORS.length]),borderColor:'#1e293b',borderWidth:3,borderRadius:8,spacing:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:true,position:lp,labels:{color:'#e2e8f0',padding:lp==='bottom'?16:12,usePointStyle:true,pointStyle:'circle',font:{size:lp==='bottom'?10:11},generateLabels:chart=>{const meta=chart.getDatasetMeta(0);const out=chart.data.labels.map((l,i)=>({text:l,fillStyle:meta.data[i]?.hidden?'#475569':chart.data.datasets[0].backgroundColor[i],strokeStyle:'transparent',lineWidth:0,pointStyle:'circle',hidden:false,index:i,fontColor:meta.data[i]?.hidden?'#64748b':'#e2e8f0'}));if(extra>0)out.push({text:'\u2022\u2022\u2022',fillStyle:'transparent',strokeStyle:'transparent',lineWidth:0,pointStyle:false,hidden:false,index:data.length,fontColor:'#64748b'});return out;}},onClick:(e,item,legend)=>{if(item.index>=data.length){toggleLTip(e,`Altre ${extra} ${catT} non mostrate`);return;}const meta=legend.chart.getDatasetMeta(0);if(meta.data[item.index]){meta.data[item.index].hidden=!meta.data[item.index].hidden;legend.chart.update();}},onHover:(e,item)=>{if(window.matchMedia('(hover:hover)').matches&&item?.index>=data.length&&extra>0)showLTip(e,`Altre ${extra} ${catT} non mostrate`);else if(!item||item.index<data.length)hideLTip();},onLeave:()=>{if(window.matchMedia('(hover:hover)').matches)hideLTip();}},tooltip:{callbacks:{label:c=>{const it=data[c.dataIndex];return`\u20AC ${c.raw.toLocaleString('it-IT')} (${it.pct.toFixed(1)}%)`;}}}}}}); 
+  chartInst=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d.name),datasets:[{data:data.map(d=>d.value),backgroundColor:data.map(function(_,i){return COLORS[i%COLORS.length];}),borderColor:'#1e293b',borderWidth:3,borderRadius:8,spacing:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:true,position:lp,labels:{color:'#e2e8f0',padding:lp==='bottom'?16:12,usePointStyle:true,pointStyle:'circle',font:{size:lp==='bottom'?10:11},generateLabels:chart=>{const meta=chart.getDatasetMeta(0);const out=chart.data.labels.map((l,i)=>({text:l,fillStyle:meta.data[i]&&meta.data[i].hidden?'#475569':chart.data.datasets[0].backgroundColor[i],strokeStyle:'transparent',lineWidth:0,pointStyle:'circle',hidden:false,index:i,fontColor:meta.data[i]&&meta.data[i].hidden?'#64748b':'#e2e8f0'}));if(extra>0)out.push({text:'\u2022\u2022\u2022',fillStyle:'transparent',strokeStyle:'transparent',lineWidth:0,pointStyle:false,hidden:false,index:data.length,fontColor:'#64748b'});return out;}},onClick:(e,item,legend)=>{if(item.index>=data.length){toggleLTip(e,'Altre '+extra+' '+catT+' non mostrate');return;}const meta=legend.chart.getDatasetMeta(0);if(meta.data[item.index]){meta.data[item.index].hidden=!meta.data[item.index].hidden;legend.chart.update();}},onHover:(e,item)=>{if(window.matchMedia('(hover:hover)').matches&&item&&item.index>=data.length&&extra>0)showLTip(e,'Altre '+extra+' '+catT+' non mostrate');else if(!item||item.index<data.length)hideLTip();},onLeave:()=>{if(window.matchMedia('(hover:hover)').matches)hideLTip();}},tooltip:{callbacks:{label:c=>{const it=data[c.dataIndex];return '\u20AC '+c.raw.toLocaleString('it-IT')+' ('+it.pct.toFixed(1)+'%)';}}}}}}); 
 }
 
 function renderGroupedBar(labels,incD,expD){
   clearEmpty();if(chartInst)chartInst.destroy();rmBL();cleanX();
   const ctx=document.getElementById('chart').getContext('2d');
-  chartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Entrate',data:incD,backgroundColor:'#4ade80',borderRadius:4,borderSkipped:false},{label:'Uscite',data:expD,backgroundColor:'#f87171',borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': \u20AC '+c.raw.toLocaleString('it-IT')}}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>'\u20AC'+v.toLocaleString('it-IT')},grid:{color:'#334155'},border:{display:false}},y:{ticks:{color:'#e2e8f0'},grid:{display:false},border:{display:false}}}}});
+  chartInst=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Entrate',data:incD,backgroundColor:'#4ade80',borderRadius:4,borderSkipped:false},{label:'Uscite',data:expD,backgroundColor:'#f87171',borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': \u20AC '+c.raw.toLocaleString('it-IT')}}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>'\u20AC'+v.toLocaleString('it-IT')},grid:{color:'#334155'},border:{display:false}},y:{ticks:{color:'#e2e8f0'},grid:{display:false},border:{display:false}}}}});
 }
 
 /* ── Tooltip helpers ── */
 function _pos(tip,cx,cy,cont){const r=cont.getBoundingClientRect();tip.style.left=(cx-r.left)+'px';tip.style.top=(cy-r.top-46)+'px';tip.style.transform='translateX(-50%)';tip.style.right='';const tr=tip.getBoundingClientRect();if(tr.left<10){tip.style.left='10px';tip.style.transform='translateX(0)';}else if(tr.right>window.innerWidth-10){tip.style.left='auto';tip.style.right='10px';tip.style.transform='translateX(0)';}}
-function showBTip(e,txt,chart){const c=document.getElementById('chartContainer');let t=c.querySelector('.bar-chart-tooltip');if(!t){t=document.createElement('div');t.className='bar-chart-tooltip';c.appendChild(t);}t.innerHTML=txt.replace(/\n/g,'<br>');t.style.opacity='1';t.style.visibility='visible';const ev=e.native||e;_pos(t,ev.clientX,ev.clientY,c);}
+function showBTip(e,txt,chart){const c=document.getElementById('chartContainer');let t=c.querySelector('.bar-chart-tooltip');if(!t){t=document.createElement('div');t.className='bar-chart-tooltip';c.appendChild(t);}t.innerHTML=txt.replace(/\n/g,'<br>');t.style.opacity='1';t.style.visibility='visible';var ev=e.native||e;_pos(t,ev.clientX,ev.clientY,c);}
 function toggleBTip(e,txt,chart){const t=document.getElementById('chartContainer').querySelector('.bar-chart-tooltip');t&&t.style.opacity==='1'?hideBTip():showBTip(e,txt,chart);}
 function hideBTip(){const t=document.querySelector('.bar-chart-tooltip');if(t){t.style.opacity='0';t.style.visibility='hidden';t.style.right='';t.style.transform='translateX(-50%)';}}
 function showLTip(e,txt){const c=document.getElementById('chartContainer');let t=c.querySelector('.legend-tooltip');if(!t){t=document.createElement('div');t.className='legend-tooltip';c.appendChild(t);}t.textContent=txt;t.style.opacity='1';t.style.visibility='visible';_pos(t,e.native.clientX,e.native.clientY,c);}
