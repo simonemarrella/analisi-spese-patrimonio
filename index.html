@@ -2175,6 +2175,42 @@ to  {
 
 }
 
+/* ═══ COMPOSIZIONE PATRIMONIO ═══ */
+.composition-panel{display:none;padding:0 32px 24px}
+.composition-panel.open{display:block}
+.composition-panel .panel-inner{border-top:1px solid #334155;padding-top:20px}
+.comp-chart-container{height:320px;position:relative;margin-bottom:20px}
+.comp-empty{display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;text-align:center;font-size:13px;padding:20px}
+.comp-note{font-size:12px;color:#64748b;margin-top:10px;line-height:1.5}
+.comp-config{margin-top:20px;border-top:1px solid #334155;padding-top:16px}
+.acct-map-wrap{margin-top:16px}
+.acct-map-list{max-height:340px;overflow-y:auto;padding-right:12px;margin-right:-6px;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.5) transparent}
+.acct-map-list::-webkit-scrollbar{width:8px}
+.acct-map-list::-webkit-scrollbar-track{background:transparent;border-radius:10px;margin:4px 0}
+.acct-map-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#6366f1,#8b5cf6);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+.acct-map-row{display:grid;grid-template-columns:1fr 200px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #334155}
+.acct-map-row:last-child{border-bottom:none}
+.acct-map-name{font-size:14px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:8px;min-width:0}
+.acct-map-balance{font-size:12px;color:#64748b;flex-shrink:0}
+.comp-config-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}
+.map-status{font-size:12px;color:#94a3b8;flex:1;min-width:0}
+.map-status.ok{color:#4ade80}
+.map-status.warn{color:#fbbf24}
+.map-status.err{color:#f87171}
+.save-map-btn{padding:10px 18px;border-radius:8px;border:1px solid #6366f1;background:rgba(99,102,241,.2);color:#e2e8f0;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:all .2s;white-space:nowrap}
+.save-map-btn:hover:not(:disabled){background:rgba(99,102,241,.4)}
+.save-map-btn:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:600px){
+  .composition-panel{padding:0 16px 20px}
+  .comp-chart-container{height:auto;min-height:420px}
+  .acct-map-row{grid-template-columns:1fr;gap:8px;padding:14px 0}
+  .acct-map-name{font-size:15px}
+  .acct-map-row .fp-select{width:100%}
+  .comp-config-footer{flex-direction:column;align-items:stretch}
+  .save-map-btn{min-height:48px;border-radius:10px;font-size:14px}
+  .map-status{font-size:13px}
+}
+
 
 </style>
 </head>
@@ -2231,6 +2267,7 @@ to  {
         <div class="patrimony-toggles">
           <button class="toggle-btn" id="accountsToggle" title="Saldo per conto"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></button>
           <button class="toggle-btn" id="historicalToggle" title="Storico Patrimonio"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+          <button class="toggle-btn" id="compositionToggle" title="Composizione Patrimonio"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></button>
         </div>
       </div>
       <div class="accounts-panel" id="accountsPanel"><div class="panel-inner"><div class="panel-header"><h2>Saldo per Conto</h2><button class="close-btn" id="closeAccounts">&#x2715;</button></div><div class="table-container" id="accountsTableContainer"></div></div></div>
@@ -2244,6 +2281,24 @@ to  {
           <div class="historical-results" id="historicalResults"></div>
         </div>
       </div>
+      <div class="composition-panel" id="compositionPanel">
+        <div class="panel-inner">
+          <div class="panel-header"><h2>Composizione Patrimonio</h2><button class="close-btn" id="closeComposition">&#x2715;</button></div>
+          <div class="comp-chart-container" id="compChartContainer"><canvas id="compChart"></canvas></div>
+          <div class="table-container" id="compTableContainer"></div>
+          <div class="comp-note" id="compNote"></div>
+          <div class="comp-config">
+            <button class="transactions-toggle-btn" id="mapToggleBtn"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> Assegna conti</button>
+            <div class="acct-map-wrap hidden" id="acctMapWrap">
+              <div class="acct-map-list" id="acctMapList"></div>
+              <div class="comp-config-footer">
+                <span class="map-status" id="mapStatus"></span>
+                <button class="save-map-btn" id="saveMapBtn">Salva su Drive</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>      
     </div>
     <div class="analysis-section">
       <div class="controls">
@@ -2581,6 +2636,14 @@ async function syncAndLoad() {
     } else {
       setStatus('Creazione cartella main\u2026');
       mainFolderId = await driveCreateFolder(MAIN_FOLDER, cashewId);
+    }
+
+    mainFolderIdGlobal = mainFolderId;
+    try {
+      setStatus('Caricamento categorie conti\u2026');
+      await loadAcctMapFromDrive(mainFolderId);
+    } catch (e) {
+      console.warn('Mappa conti non caricata:', e);
     }
 
     setStatus('Caricamento storico\u2026');
@@ -3210,6 +3273,7 @@ function analyzeData(rows) {
   updBadge();
   updateDisplay();
   if (histPanel.classList.contains('open')) updHist();
+  if (compPanel.classList.contains('open')) { renderAcctMapList(); renderComposition(); }
 }
 
 function getFiltTx() {
@@ -4089,6 +4153,200 @@ function initScrollNames(container) {
     });
   });
 }
+
+/* ═══════════════════════════════════════════
+   COMPOSIZIONE PATRIMONIO
+   ═══════════════════════════════════════════ */
+const PAT_GROUPS = {
+  liquido:   { label: 'Patrimonio Liquido',   color: '#6366f1' },
+  investito: { label: 'Patrimonio Investito', color: '#10b981' },
+  emergenza: { label: 'Fondo Emergenza',      color: '#f59e0b' },
+  nc:        { label: 'Non classificato',     color: '#64748b' }
+};
+const MAP_FILE = 'accounts_map.json';
+const LS_MAP_KEY = 'cashew_accounts_map';
+
+let acctMap = {};
+let mapFileId = null;
+let mainFolderIdGlobal = null;
+let compChartInst = null;
+let mapDirty = false;
+
+const compToggle = document.getElementById('compositionToggle');
+const compPanel = document.getElementById('compositionPanel');
+
+function loadMapLocal() {
+  try {
+    const s = localStorage.getItem(LS_MAP_KEY);
+    if (s) acctMap = JSON.parse(s) || {};
+  } catch (e) { console.warn('localStorage non disponibile', e); }
+}
+
+function saveMapLocal() {
+  try { localStorage.setItem(LS_MAP_KEY, JSON.stringify(acctMap)); } catch (e) {}
+}
+
+async function loadAcctMapFromDrive(folderId) {
+  const files = await driveQuery("name='" + MAP_FILE + "' and '" + folderId + "' in parents and trashed=false");
+  if (!files.length) { mapFileId = null; return; }
+  mapFileId = files[0].id;
+  const raw = await driveDownload(mapFileId);
+  const d = JSON.parse(raw);
+  if (d && d.map) {
+    acctMap = d.map;
+    saveMapLocal();
+    mapDirty = false;
+  }
+}
+
+async function saveAcctMap() {
+  const btn = document.getElementById('saveMapBtn');
+  const st = document.getElementById('mapStatus');
+  saveMapLocal();
+  if (!gAccessToken || !mainFolderIdGlobal) {
+    st.textContent = 'Salvato su questo dispositivo. Collegati a Drive per sincronizzare.';
+    st.className = 'map-status warn';
+    return;
+  }
+  btn.disabled = true;
+  st.textContent = 'Salvataggio\u2026';
+  st.className = 'map-status';
+  try {
+    const payload = JSON.stringify({ version: 1, updated: new Date().toISOString(), map: acctMap }, null, 2);
+    const saved = await driveWriteFile(mapFileId, mainFolderIdGlobal, MAP_FILE, payload);
+    mapFileId = saved.id;
+    mapDirty = false;
+    st.textContent = '\u2713 Salvato su Drive';
+    st.className = 'map-status ok';
+  } catch (e) {
+    st.textContent = 'Salvataggio non riuscito: ' + e.message;
+    st.className = 'map-status err';
+  }
+  btn.disabled = false;
+}
+
+function groupTotals() {
+  const t = { liquido: 0, investito: 0, emergenza: 0, nc: 0 };
+  Object.entries(acctBal).forEach(([n, v]) => {
+    const g = PAT_GROUPS[acctMap[n]] ? acctMap[n] : 'nc';
+    t[g] += v;
+  });
+  Object.keys(t).forEach(k => { const r = Math.round(t[k] * 100) / 100; t[k] = r === 0 ? 0 : r; });
+  return t;
+}
+
+function renderComposition() {
+  const totals = groupTotals();
+  const grand = Object.values(totals).reduce((s, v) => s + v, 0);
+  const rows = Object.keys(PAT_GROUPS)
+    .map(k => ({ key: k, label: PAT_GROUPS[k].label, color: PAT_GROUPS[k].color, value: totals[k] }))
+    .filter(r => r.key !== 'nc' || r.value !== 0);
+
+  const tEl = document.getElementById('compTableContainer');
+  tEl.innerHTML = '<table class="data-table"><thead><tr><th>Gruppo</th><th style="text-align:right">Saldo</th><th style="text-align:right">%</th></tr></thead><tbody>' +
+    rows.map(r => '<tr><td><div class="category-cell"><span class="table-color-dot" style="background:' + r.color + '"></span><span class="category-name"><span>' + esc(r.label) + '</span></span></div></td><td style="text-align:right;color:' + (r.value >= 0 ? '#4ade80' : '#f87171') + ';font-weight:600">\u20AC ' + f2(r.value) + '</td><td style="text-align:right;color:#94a3b8;font-size:12px">' + (grand !== 0 ? Math.abs(r.value / grand * 100).toFixed(1) : '0.0') + '%</td></tr>').join('') +
+    '</tbody><tfoot><tr><td>Totale</td><td style="text-align:right;color:' + (grand >= 0 ? '#4ade80' : '#f87171') + '">\u20AC ' + f2(grand) + '</td><td style="text-align:right">100%</td></tr></tfoot></table>';
+  initScrollNames(tEl);
+
+  const unassigned = Object.keys(acctBal).filter(n => !PAT_GROUPS[acctMap[n]] || acctMap[n] === 'nc').length;
+  const negatives = rows.filter(r => r.value < 0).map(r => r.label);
+  const notes = [];
+  if (unassigned) notes.push(unassigned + (unassigned === 1 ? ' conto non ha ancora una categoria.' : ' conti non hanno ancora una categoria.') + ' Aprili con "Assegna conti" qui sotto.');
+  if (negatives.length) notes.push('Saldo negativo, quindi escluso dal grafico: ' + negatives.join(', ') + '.');
+  document.getElementById('compNote').textContent = notes.join(' ');
+
+  const pie = rows.filter(r => r.value > 0);
+  const pieTot = pie.reduce((s, r) => s + r.value, 0);
+  const cont = document.getElementById('compChartContainer');
+  const cv = document.getElementById('compChart');
+  const old = cont.querySelector('.comp-empty');
+  if (old) old.remove();
+  if (compChartInst) { compChartInst.destroy(); compChartInst = null; }
+  if (!pie.length) {
+    cv.style.display = 'none';
+    const d = document.createElement('div');
+    d.className = 'comp-empty';
+    d.textContent = Object.keys(acctBal).length ? 'Nessun gruppo con saldo positivo da mostrare' : 'Carica i dati per vedere la composizione';
+    cont.appendChild(d);
+    return;
+  }
+  cv.style.display = 'block';
+  const lp = getLegPos();
+  compChartInst = new Chart(cv.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: pie.map(r => r.label),
+      datasets: [{
+        data: pie.map(r => r.value),
+        backgroundColor: pie.map(r => r.color),
+        borderColor: '#1e293b', borderWidth: 3, borderRadius: 8, spacing: 2, hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '55%',
+      plugins: {
+        legend: {
+          position: lp,
+          labels: { color: '#e2e8f0', usePointStyle: true, pointStyle: 'circle', padding: lp === 'bottom' ? 16 : 12, font: { size: lp === 'bottom' ? 11 : 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: c => '\u20AC ' + f2(c.raw) + ' (' + (pieTot > 0 ? (c.raw / pieTot * 100).toFixed(1) : '0.0') + '%)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderAcctMapList() {
+  const el = document.getElementById('acctMapList');
+  const names = Object.keys(acctBal).sort((a, b) => a.localeCompare(b, 'it'));
+  if (!names.length) {
+    el.innerHTML = '<div class="no-transactions">Nessun conto disponibile</div>';
+    return;
+  }
+  el.innerHTML = names.map(n => {
+    const cur = PAT_GROUPS[acctMap[n]] ? acctMap[n] : 'nc';
+    const opts = Object.entries(PAT_GROUPS).map(([k, g]) => '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + g.label + '</option>').join('');
+    return '<div class="acct-map-row"><span class="acct-map-name" title="' + esc(n) + '">' + esc(n) + '<span class="acct-map-balance">\u20AC ' + f2(acctBal[n]) + '</span></span><select class="fp-select acct-map-select" data-acct="' + esc(n) + '">' + opts + '</select></div>';
+  }).join('');
+  el.querySelectorAll('.acct-map-select').forEach(s => {
+    s.addEventListener('change', e => {
+      acctMap[e.target.dataset.acct] = e.target.value;
+      saveMapLocal();
+      mapDirty = true;
+      const st = document.getElementById('mapStatus');
+      st.textContent = 'Modifiche non ancora salvate su Drive';
+      st.className = 'map-status warn';
+      renderComposition();
+    });
+  });
+}
+
+compToggle.addEventListener('click', () => {
+  const o = compPanel.classList.toggle('open');
+  compToggle.classList.toggle('active', o);
+  if (o) { renderAcctMapList(); renderComposition(); }
+});
+document.getElementById('closeComposition').addEventListener('click', () => {
+  compPanel.classList.remove('open');
+  compToggle.classList.remove('active');
+});
+document.getElementById('mapToggleBtn').addEventListener('click', () => {
+  const btn = document.getElementById('mapToggleBtn');
+  const wrap = document.getElementById('acctMapWrap');
+  const hidden = wrap.classList.toggle('hidden');
+  btn.classList.toggle('open', !hidden);
+  btn.lastChild.textContent = hidden ? ' Assegna conti' : ' Nascondi';
+  if (!hidden) renderAcctMapList();
+});
+document.getElementById('saveMapBtn').addEventListener('click', saveAcctMap);
+window.addEventListener('beforeunload', e => {
+  if (mapDirty) { e.preventDefault(); e.returnValue = ''; }
+});
+loadMapLocal();
+
 </script>
 </body>
 </html>
